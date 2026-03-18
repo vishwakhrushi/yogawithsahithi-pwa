@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#7C3AED" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>YogaWithSahithi</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+  <!-- ==================== OFFLINE BANNER ==================== -->
+  <div class="offline-banner" id="offlineBanner">You are offline. Changes will sync when connected.</div>
+
+  <!-- ==================== APP HEADER ==================== -->
+  <header class="app-header" id="appHeader" style="display:none;">
+    <h1>YogaWithSahithi</h1>
+    <span class="user-badge" id="userBadge"></span>
+  </header>
+
+  <!-- ==================== TOAST CONTAINER ==================== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ==================== SCREENS ==================== -->
+  <main id="app">
+
+    <!-- LOGIN SCREEN -->
+    <div class="screen" id="screen-login">
+      <div class="login-container">
+        <div class="login-card">
+          <div class="logo">
+            <h1>YogaWithSahithi</h1>
+            <p>Business Management System</p>
+          </div>
+          <form id="loginForm" onsubmit="return false;">
+            <div class="form-group">
+              <label for="loginApiUrl">API URL</label>
+              <input type="url" id="loginApiUrl" placeholder="https://script.google.com/macros/s/.../exec" required />
+              <div class="helper-text">Your Apps Script deployment URL</div>
+            </div>
+            <div class="form-group">
+              <label for="loginToken">Access Token</label>
+              <input type="password" id="loginToken" placeholder="Enter your access token" required />
+            </div>
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="loginRemember" checked style="width:auto;" />
+                Remember me
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="loginBtn" onclick="doLogin()">
+              Sign In
+            </button>
+            <div id="loginError" class="helper-text error" style="margin-top:12px;text-align:center;"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD SCREEN -->
+    <div class="screen" id="screen-dashboard">
+      <div class="container">
+        <div class="section-header">
+          <h2>Dashboard</h2>
+          <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">Refresh</button>
+        </div>
+
+        <div class="period-selector">
+          <select id="dashMonth" onchange="loadDashboard()">
+            <option value="1">Jan</option><option value="2">Feb</option>
+            <option value="3">Mar</option><option value="4">Apr</option>
+            <option value="5">May</option><option value="6">Jun</option>
+            <option value="7">Jul</option><option value="8">Aug</option>
+            <option value="9">Sep</option><option value="10">Oct</option>
+            <option value="11">Nov</option><option value="12">Dec</option>
+          </select>
+          <select id="dashYear" onchange="loadDashboard()"></select>
+        </div>
+
+        <div class="summary-grid" id="dashSummary">
+          <div class="summary-card"><div class="card-icon purple">$</div><div class="card-title">Revenue</div><div class="card-value" id="dashRevenue">--</div></div>
+          <div class="summary-card"><div class="card-icon green">#</div><div class="card-title">Payments</div><div class="card-value" id="dashPayments">--</div></div>
+          <div class="summary-card"><div class="card-icon amber">N</div><div class="card-title">Net Revenue</div><div class="card-value" id="dashNet">--</div></div>
+          <div class="summary-card"><div class="card-icon red">S</div><div class="card-title">Students</div><div class="card-value" id="dashStudents">--</div></div>
+        </div>
+
+        <div class="chart-container">
+          <h3>Revenue by Course</h3>
+          <canvas id="chartCourse"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3>Monthly Trend</h3>
+          <canvas id="chartTrend"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3>Payment Methods</h3>
+          <canvas id="chartMethods"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD PAYMENT SCREEN -->
+    <div class="screen" id="screen-add-payment">
+      <div class="container">
+        <h2 style="margin-bottom:20px;">Add Payment</h2>
+        <form id="addPaymentForm" onsubmit="return false;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="apName">Student Name *</label>
+              <input type="text" id="apName" required autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label for="apEmail">Email</label>
+              <input type="email" id="apEmail" autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="apPhone">Phone *</label>
+            <input type="tel" id="apPhone" inputmode="tel" placeholder="e.g. +91 98765 43210" required autocomplete="tel" />
+            <div class="helper-text">Add phone number with country code</div>
+            <div class="helper-text" id="apPhoneMsg"></div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="apCourse">Course *</label>
+              <select id="apCourse" required>
+                <option value="">Select course</option>
+                <optgroup label="Evening Batch 1">
+                  <option value="EV1-1M">EV1 - 1 Month</option>
+                  <option value="EV1-3M">EV1 - 3 Months</option>
+                </optgroup>
+                <optgroup label="Evening Batch 2">
+                  <option value="EV2-1M">EV2 - 1 Month</option>
+                  <option value="EV2-3M">EV2 - 3 Months</option>
+                </optgroup>
+                <optgroup label="Morning Batch">
+                  <option value="MOR-1M">Morning - 1 Month</option>
+                  <option value="MOR-3M">Morning - 3 Months</option>
+                </optgroup>
+                <optgroup label="Prenatal Yoga">
+                  <option value="PRE-1M">Prenatal - 1 Month</option>
+                  <option value="PRE-3M">Prenatal - 3 Months</option>
+                </optgroup>
+                <optgroup label="Recorded Program">
+                  <option value="REC-1M">Recorded - 1 Month</option>
+                  <option value="REC-3M">Recorded - 3 Months</option>
+                </optgroup>
+                <optgroup label="Other Programs">
+                  <option value="DIET-1M">Diet - 1 Month</option>
+                  <option value="DIET-3M">Diet - 3 Months</option>
+                  <option value="FACEYOGA">Face Yoga</option>
+                  <option value="BACKPAIN">Back Pain Course</option>
+                  <option value="OTHER">Other Payment</option>
+                  <option value="REFUND">Refund</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="apAmount">Amount *</label>
+              <input type="number" id="apAmount" required min="1" step="0.01" placeholder="0.00" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="apPayDate">Payment Date *</label>
+              <input type="date" id="apPayDate" required />
+            </div>
+            <div class="form-group">
+              <label for="apAccount">Payment Account *</label>
+              <select id="apAccount" required>
+                <option value="">Select account</option>
+                <option value="Playeven">Playeven</option>
+                <option value="Sahithi">Sahithi</option>
+                <option value="ArunaLatha">ArunaLatha</option>
+                <option value="Vishwak">Vishwak</option>
+                <option value="YogaWithSahithi">YogaWithSahithi</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="apTxnId">Transaction ID</label>
+            <input type="text" id="apTxnId" placeholder="UTR / Razorpay ID / Reference" />
+          </div>
+
+          <div class="form-group">
+            <label for="apRemarks">Remarks</label>
+            <textarea id="apRemarks" placeholder="Optional notes..."></textarea>
+          </div>
+
+          <div class="btn-group" style="margin-top:8px;">
+            <button type="button" class="btn btn-primary" id="apSaveBtn" onclick="savePayment()">Save Payment</button>
+            <button type="button" class="btn btn-success" id="apSaveWaBtn" onclick="savePayment(true)">Save + WhatsApp</button>
+            <button type="button" class="btn btn-outline" onclick="clearPaymentForm()">Clear</button>
+          </div>
+          <div id="apStatus" class="helper-text" style="margin-top:12px;"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PAYMENTS LIST SCREEN -->
+    <div class="screen" id="screen-payments">
+      <div class="container">
+        <div class="section-header">
+          <h2>Payments</h2>
+          <button class="btn btn-ghost btn-sm" id="exportCsvBtn" onclick="exportCSV()" style="display:none;">Export CSV</button>
+        </div>
+
+        <div class="search-bar">
+          <input type="search" id="plSearch" placeholder="Search name, phone, email..." />
+          <button class="btn btn-primary btn-sm" onclick="searchPayments()">Search</button>
+        </div>
+
+        <div class="filter-row">
+          <select id="plCourse" onchange="searchPayments()">
+            <option value="">All Courses</option>
+            <option value="EV1-1M">EV1-1M</option><option value="EV1-3M">EV1-3M</option>
+            <option value="EV2-1M">EV2-1M</option><option value="EV2-3M">EV2-3M</option>
+            <option value="MOR-1M">MOR-1M</option><option value="MOR-3M">MOR-3M</option>
+            <option value="PRE-1M">PRE-1M</option><option value="PRE-3M">PRE-3M</option>
+            <option value="REC-1M">REC-1M</option><option value="REC-3M">REC-3M</option>
+            <option value="DIET-1M">DIET-1M</option><option value="DIET-3M">DIET-3M</option>
+            <option value="FACEYOGA">FACEYOGA</option><option value="BACKPAIN">BACKPAIN</option>
+            <option value="OTHER">OTHER</option><option value="REFUND">REFUND</option>
+          </select>
+          <select id="plAccount" onchange="searchPayments()">
+            <option value="">All Accounts</option>
+            <option value="Playeven">Playeven</option>
+            <option value="Sahithi">Sahithi</option>
+            <option value="ArunaLatha">ArunaLatha</option>
+            <option value="Vishwak">Vishwak</option>
+            <option value="YogaWithSahithi">YogaWithSahithi</option>
+          </select>
+        </div>
+
+        <div id="plResults"></div>
+        <div id="plStatus" class="text-sm text-muted" style="text-align:center;margin:12px 0;"></div>
+        <div class="load-more" id="plLoadMore" style="display:none;">
+          <button class="btn btn-outline btn-sm" onclick="loadMorePayments()">Load More</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENTS SCREEN -->
+    <div class="screen" id="screen-students">
+      <div class="container">
+        <h2 style="margin-bottom:16px;">Students</h2>
+
+        <div class="search-bar">
+          <input type="search" id="stSearch" placeholder="Search name or phone..." />
+          <button class="btn btn-primary btn-sm" onclick="searchStudents()">Search</button>
+        </div>
+
+        <div class="tab-bar" id="stBatchTabs">
+          <button class="tab active" data-batch="" onclick="filterBatch(this)">All</button>
+          <button class="tab" data-batch="EV1" onclick="filterBatch(this)">EV1</button>
+          <button class="tab" data-batch="EV2" onclick="filterBatch(this)">EV2</button>
+          <button class="tab" data-batch="MOR" onclick="filterBatch(this)">MOR</button>
+          <button class="tab" data-batch="PRE" onclick="filterBatch(this)">PRE</button>
+          <button class="tab" data-batch="REC" onclick="filterBatch(this)">REC</button>
+          <button class="tab" data-batch="FACE" onclick="filterBatch(this)">FACE</button>
+          <button class="tab" data-batch="DIET" onclick="filterBatch(this)">DIET</button>
+        </div>
+
+        <div id="stResults"></div>
+        <div id="stStatus" class="text-sm text-muted" style="text-align:center;margin:12px 0;"></div>
+        <div class="load-more" id="stLoadMore" style="display:none;">
+          <button class="btn btn-outline btn-sm" onclick="loadMoreStudents()">Load More</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WHATSAPP SCREEN -->
+    <div class="screen" id="screen-whatsapp">
+      <div class="container">
+        <h2 style="margin-bottom:16px;">WhatsApp Center</h2>
+
+        <div class="tab-bar" id="waTabs">
+          <button class="tab active" onclick="switchWaTab('individual', this)">Individual</button>
+          <button class="tab" onclick="switchWaTab('broadcast', this)" id="waBroadcastTab">Broadcast</button>
+        </div>
+
+        <!-- Individual Send -->
+        <div id="waIndividual">
+          <div class="search-bar">
+            <input type="search" id="waSearch" placeholder="Search student by name or phone..." />
+            <button class="btn btn-primary btn-sm" onclick="searchWaRecipients()">Search</button>
+          </div>
+
+          <div id="waRecipientList"></div>
+          <div id="waSelectedRecipient" style="display:none;"></div>
+
+          <div class="form-group" style="margin-top:16px;">
+            <label>Message Template</label>
+            <div id="waTemplates"></div>
+          </div>
+
+          <button class="btn btn-success btn-block" id="waSendBtn" onclick="sendWhatsApp('individual')" disabled>
+            Send WhatsApp
+          </button>
+          <div id="waStatus" class="helper-text" style="margin-top:12px;text-align:center;"></div>
+        </div>
+
+        <!-- Broadcast -->
+        <div id="waBroadcast" style="display:none;">
+          <div class="form-group">
+            <label>Select Batch</label>
+            <select id="waBatchSelect">
+              <option value="">Select batch...</option>
+              <option value="EV1">Evening Batch 1</option>
+              <option value="EV2">Evening Batch 2</option>
+              <option value="MOR">Morning Batch</option>
+              <option value="PRE">Prenatal</option>
+              <option value="REC">Recorded</option>
+              <option value="DIET">Diet</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Message Template</label>
+            <div id="waBroadcastTemplates"></div>
+          </div>
+
+          <div id="waBroadcastPreview" style="display:none;">
+            <div class="card">
+              <div class="card-title">Recipients</div>
+              <div class="card-value" id="waBroadcastCount">0</div>
+              <div class="text-sm text-muted" id="waBroadcastNames"></div>
+            </div>
+          </div>
+
+          <button class="btn btn-success btn-block" id="waBroadcastSendBtn" onclick="sendWhatsApp('broadcast')" disabled>
+            Send Broadcast
+          </button>
+          <div id="waBroadcastStatus" class="helper-text" style="margin-top:12px;text-align:center;"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== EDIT MODAL ==================== -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Payment</h2>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <form id="editForm" onsubmit="return false;">
+        <input type="hidden" id="editRowIndex" />
+        <div class="form-group">
+          <label for="editEmail">Email</label>
+          <input type="email" id="editEmail" />
+        </div>
+        <div class="form-group">
+          <label for="editPhone">Phone</label>
+          <input type="tel" id="editPhone" inputmode="tel" />
+          <div class="helper-text">Add phone number with country code</div>
+        </div>
+        <div class="form-group" id="editAmountGroup" style="display:none;">
+          <label for="editAmount">Amount</label>
+          <input type="number" id="editAmount" step="0.01" />
+        </div>
+        <div class="form-group" id="editCourseGroup" style="display:none;">
+          <label for="editCourse">Course</label>
+          <select id="editCourse">
+            <option value="">Select course</option>
+            <option value="EV1-1M">EV1-1M</option><option value="EV1-3M">EV1-3M</option>
+            <option value="EV2-1M">EV2-1M</option><option value="EV2-3M">EV2-3M</option>
+            <option value="MOR-1M">MOR-1M</option><option value="MOR-3M">MOR-3M</option>
+            <option value="PRE-1M">PRE-1M</option><option value="PRE-3M">PRE-3M</option>
+            <option value="REC-1M">REC-1M</option><option value="REC-3M">REC-3M</option>
+            <option value="DIET-1M">DIET-1M</option><option value="DIET-3M">DIET-3M</option>
+            <option value="FACEYOGA">FACEYOGA</option><option value="BACKPAIN">BACKPAIN</option>
+            <option value="OTHER">OTHER</option><option value="REFUND">REFUND</option>
+          </select>
+        </div>
+        <div class="form-group" id="editTxnIdGroup" style="display:none;">
+          <label for="editTxnId">Transaction ID</label>
+          <input type="text" id="editTxnId" />
+        </div>
+        <div class="form-group" id="editAccountGroup" style="display:none;">
+          <label for="editAccount">Payment Account</label>
+          <select id="editAccount">
+            <option value="">Select account</option>
+            <option value="Playeven">Playeven</option>
+            <option value="Sahithi">Sahithi</option>
+            <option value="ArunaLatha">ArunaLatha</option>
+            <option value="Vishwak">Vishwak</option>
+            <option value="YogaWithSahithi">YogaWithSahithi</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editRemarks">Remarks</label>
+          <textarea id="editRemarks"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editUpdateNotes">Update Notes</label>
+          <input type="text" id="editUpdateNotes" placeholder="Reason for edit" />
+        </div>
+        <div class="btn-group">
+          <button type="button" class="btn btn-primary" onclick="submitEdit()">Save Changes</button>
+          <button type="button" class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== BOTTOM NAV ==================== -->
+  <nav class="bottom-nav" id="bottomNav" style="display:none;">
+    <button class="nav-item active" data-screen="dashboard" onclick="navigateTo('dashboard', this)">
+      <span class="nav-icon">&#x1F4CA;</span>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-item" data-screen="add-payment" id="navAddPayment" onclick="navigateTo('add-payment', this)">
+      <span class="nav-icon">&#x2795;</span>
+      <span>Add</span>
+    </button>
+    <button class="nav-item" data-screen="payments" onclick="navigateTo('payments', this)">
+      <span class="nav-icon">&#x1F4B3;</span>
+      <span>Payments</span>
+    </button>
+    <button class="nav-item" data-screen="students" onclick="navigateTo('students', this)">
+      <span class="nav-icon">&#x1F465;</span>
+      <span>Students</span>
+    </button>
+    <button class="nav-item" data-screen="whatsapp" id="navWhatsApp" onclick="navigateTo('whatsapp', this)">
+      <span class="nav-icon">&#x1F4AC;</span>
+      <span>WhatsApp</span>
+      <span class="offline-badge" id="offlineCount" style="display:none;">0</span>
+    </button>
+  </nav>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/login.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/students.js"></script>
+  <script src="js/whatsapp.js"></script>
+
+</body>
+</html>
