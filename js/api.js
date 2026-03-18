@@ -118,5 +118,5 @@ function digitsOnly(s) {
 }
 
 function formatCurrency(n) {
-  return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n);
+  return "₹" + new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n);
 }
