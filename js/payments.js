@@ -258,6 +258,17 @@ function openEditModal(idx) {
     document.getElementById("editAccount").value = p.paymentAccount || "";
   }
 
+  // WA history section — MANAGER+ only
+  const waHistoryEl = document.getElementById("editWaHistory");
+  if (waHistoryEl) {
+    if (hasRole("MANAGER")) {
+      waHistoryEl.style.display = "block";
+      loadWaHistory(p.rowIndex);
+    } else {
+      waHistoryEl.style.display = "none";
+    }
+  }
+
   document.getElementById("editModal").classList.add("active");
 }
 
@@ -312,6 +323,44 @@ async function quickWhatsApp(idx) {
     showToast("WhatsApp sent to " + p.name, "success");
   } catch (err) {
     showToast("WhatsApp failed: " + err.message, "error");
+  }
+}
+
+// ===================== WA HISTORY IN EDIT MODAL =====================
+
+async function loadWaHistory(paymentRow) {
+  const container = document.getElementById("editWaHistory");
+  if (!container) return;
+
+  container.innerHTML = '<div class="text-sm text-muted">Loading WhatsApp history...</div>';
+
+  try {
+    const result = await api.get("getWaLog", { paymentRow });
+    const entries = result.entries || [];
+
+    if (entries.length === 0) {
+      container.innerHTML = '<div class="text-sm text-muted">No WhatsApp messages sent yet</div>';
+      return;
+    }
+
+    container.innerHTML = entries.map(e => {
+      const statusClass = e.status === "sent" ? "success" : "error";
+      const statusIcon  = e.status === "sent" ? "✓" : "✗";
+      return `
+        <div style="border-left:3px solid var(--${statusClass === "success" ? "success" : "danger"},#ef4444);padding:6px 10px;margin-bottom:8px;background:var(--surface);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:600;color:var(--${statusClass === "success" ? "success" : "danger"},#ef4444);">${statusIcon} ${escHtml(e.status.toUpperCase())}</span>
+            <span style="font-size:11px;color:var(--text-muted);">${escHtml(e.timestamp)}</span>
+          </div>
+          <div style="font-size:12px;margin-top:2px;">${escHtml(e.template)}</div>
+          ${e.messageId ? `<div style="font-size:11px;color:var(--text-muted);">ID: ${escHtml(e.messageId)}</div>` : ""}
+          ${e.error    ? `<div style="font-size:11px;color:#ef4444;">${escHtml(e.error)}</div>` : ""}
+          <div style="font-size:11px;color:var(--text-muted);">by ${escHtml(e.sentBy)}</div>
+        </div>
+      `;
+    }).join("");
+  } catch (err) {
+    container.innerHTML = '<div class="text-sm text-muted">Could not load WA history</div>';
   }
 }
 
