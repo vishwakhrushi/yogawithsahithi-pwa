@@ -349,6 +349,12 @@ async function sendWhatsApp(type) {
 
   const { params, dietFormLink } = readTemplateParams(formId, template);
 
+  // Debug log
+  console.log("[WA send] template:", template);
+  console.log("[WA send] params:", params);
+  console.log("[WA send] dietFormLink:", dietFormLink);
+  console.log("[WA send] recipients:", recipients);
+
   // Confirm broadcast
   if (!isIndividual && recipients.length > 1) {
     if (!confirm(`Send "${template}" to ${recipients.length} students?`)) return;
@@ -362,10 +368,15 @@ async function sendWhatsApp(type) {
     const body = { type, templateName: template, templateParams: params, recipients };
     if (dietFormLink) body.dietFormLink = dietFormLink;
 
+    console.log("[WA send] full payload:", JSON.stringify(body));
     const result = await api.post("sendWhatsApp", body);
+    console.log("[WA send] result:", JSON.stringify(result));
 
     const msg = `Sent: ${result.sent}, Failed: ${result.failed}`;
-    statusEl.textContent = msg;
+    // Show per-recipient errors if any failed
+    const errors = (result.results || []).filter(r => r.status !== "sent").map(r => r.error).filter(Boolean);
+    const fullMsg = errors.length ? msg + " — " + errors.join("; ") : msg;
+    statusEl.textContent = fullMsg;
     statusEl.className   = result.failed > 0 ? "helper-text warning" : "helper-text success";
     showToast(msg, result.failed > 0 ? "warning" : "success");
 
