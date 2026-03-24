@@ -122,7 +122,7 @@ function renderTemplateParams(formId, templateName, student, batch) {
   // Pre-fill values from batch or student where available
   const prefill = {
     name:           student ? student.name        : "",
-    batchName:      batch   ? batch.batchName     : "",
+    batchName:      batch   ? batch.batchType     : "",
     classTime:      batch   ? batch.classTime     : "",
     startDate:      batch   ? batch.startDate     : "",
     classDays:      batch   ? batch.classDays     : "",
@@ -170,7 +170,8 @@ function readTemplateParams(formId, templateName) {
   let dietFormLink = "";
   if (tmpl.hasDietButton) {
     const el = document.getElementById(`${formId}_dietFormLink`);
-    dietFormLink = el ? el.value.trim() : "";
+    // Strip base URL — Meta button expects only the suffix after https://forms.gle/
+    dietFormLink = (el ? el.value.trim() : "").replace(/^https?:\/\/forms\.gle\//i, "").trim();
   }
 
   return { params, dietFormLink };
