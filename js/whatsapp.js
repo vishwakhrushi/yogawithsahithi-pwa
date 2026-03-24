@@ -171,7 +171,9 @@ function readTemplateParams(formId, templateName) {
   if (tmpl.hasDietButton) {
     const el = document.getElementById(`${formId}_dietFormLink`);
     // Strip base URL — Meta button expects only the suffix after https://forms.gle/
-    dietFormLink = (el ? el.value.trim() : "").replace(/^https?:\/\/forms\.gle\//i, "").trim();
+    const raw = el ? el.value.trim() : "";
+    const m   = raw.match(/forms\.gle\/([^\/\?\s#]+)/i);
+    dietFormLink = m ? m[1] : raw;
   }
 
   return { params, dietFormLink };
