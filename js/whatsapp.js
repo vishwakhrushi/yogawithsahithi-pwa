@@ -85,7 +85,18 @@ function selectTemplate(name, el) {
   waSelectedTemplate = name;
   document.querySelectorAll("#waTemplates .template-card").forEach(c => c.classList.remove("selected"));
   el.classList.add("selected");
-  renderTemplateParams("waParamsForm", name, waSelectedRecipients[0] || null, null);
+
+  const student = waSelectedRecipients[0] || null;
+  let batch = null;
+  if (student && student.course) {
+    const prefix = student.course.substring(0, 3).toUpperCase();
+    batch = waBatchesCache.find(b =>
+      b.batchId.toUpperCase().endsWith("-" + prefix) ||
+      b.batchName.toUpperCase().includes(prefix)
+    ) || null;
+  }
+
+  renderTemplateParams("waParamsForm", name, student, batch);
   updateSendButton();
 }
 
