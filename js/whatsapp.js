@@ -351,7 +351,8 @@ async function sendWhatsApp(type) {
       clearWaRecipient();
       waSelectedTemplate = "";
       document.querySelectorAll("#waTemplates .template-card").forEach(c => c.classList.remove("selected"));
-      document.getElementById("waParamsForm").innerHTML = "";
+      const paramsForm = document.getElementById("waParamsForm");
+      if (paramsForm) paramsForm.innerHTML = "";
     }
   } catch (err) {
     statusEl.textContent = err.message;
