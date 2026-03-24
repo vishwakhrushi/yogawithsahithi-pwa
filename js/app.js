@@ -9,11 +9,11 @@ const SCREENS = ["login", "dashboard", "add-payment", "payments", "students", "w
 // Min role required per screen (null = no auth needed)
 const SCREEN_ROLES = {
   "login":       null,
-  "dashboard":   "VIEW_ONLY",
+  "dashboard":   "MANAGER",
   "add-payment": "STAFF",
   "payments":    "VIEW_ONLY",
   "students":    "VIEW_ONLY",
-  "whatsapp":    "STAFF",
+  "whatsapp":    "MANAGER",
 };
 
 // Track if screen has been initialized
@@ -35,7 +35,7 @@ function handleRoute() {
   }
   if (minRole && !hasRole(minRole)) {
     showToast("You don't have permission to access this screen", "error");
-    window.location.hash = "#/dashboard";
+    window.location.hash = hasRole("MANAGER") ? "#/dashboard" : "#/payments";
     return;
   }
 
@@ -96,7 +96,7 @@ function updateNavVisibility() {
   const navAdd = document.getElementById("navAddPayment");
   const navWa  = document.getElementById("navWhatsApp");
   if (navAdd) navAdd.style.display = hasRole("STAFF") ? "flex" : "none";
-  if (navWa)  navWa.style.display = hasRole("STAFF") ? "flex" : "none";
+  if (navWa)  navWa.style.display = hasRole("MANAGER") ? "flex" : "none";
 
   // Hide broadcast tab for STAFF
   const broadcastTab = document.getElementById("waBroadcastTab");
@@ -117,7 +117,8 @@ function onLoginSuccess() {
   // Reset screen loaded state so they reload with fresh data
   Object.keys(screenLoaded).forEach(k => delete screenLoaded[k]);
   updateNavVisibility();
-  window.location.hash = "#/dashboard";
+  // MANAGER+ land on dashboard; VIEW_ONLY and STAFF land on payments
+  window.location.hash = hasRole("MANAGER") ? "#/dashboard" : "#/payments";
 }
 
 function logout() {
