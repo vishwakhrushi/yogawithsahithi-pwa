@@ -52,6 +52,14 @@ async function initWhatsApp() {
   renderTemplates("waTemplates", false);
   renderTemplates("waBroadcastTemplates", true);
   await loadBatchList();
+
+  // Pre-select student if navigated from payments list
+  if (typeof waPreloadStudent !== "undefined" && waPreloadStudent) {
+    const s = waPreloadStudent;
+    waPreloadStudent = null;
+    selectWaRecipient(s.phone, s.name, s.course);
+    showToast("Select a template to message " + s.name, "info");
+  }
 }
 
 // ===================== TEMPLATE CARDS =====================

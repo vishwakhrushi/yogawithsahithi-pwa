@@ -50,24 +50,7 @@ async function savePayment(sendWhatsApp = false) {
     statusEl.className = "helper-text success";
     showToast("Payment added for " + name, "success");
 
-    // Send WhatsApp welcome if requested
-    if (sendWhatsApp && result.phoneNorm) {
-      try {
-        await api.post("sendWhatsApp", {
-          type: "individual",
-          templateName: "welcome",
-          recipients: [{
-            phone: result.phoneNorm,
-            name,
-            course,
-            rowIndex: result.rowNum,
-          }],
-        });
-        showToast("WhatsApp welcome sent!", "success");
-      } catch (waErr) {
-        showToast("Payment saved but WhatsApp failed: " + waErr.message, "warning");
-      }
-    }
+    // Auto WhatsApp is handled server-side for EV1/EV2/MOR courses
 
     clearPaymentForm();
 
@@ -305,25 +288,23 @@ async function submitEdit() {
 
 // ===================== QUICK WHATSAPP =====================
 
-async function quickWhatsApp(idx) {
+// Pre-selected student to load when WhatsApp center opens
+let waPreloadStudent = null;
+
+function quickWhatsApp(idx) {
   const p = paymentsData[idx];
   if (!p) return;
 
-  try {
-    await api.post("sendWhatsApp", {
-      type: "individual",
-      templateName: "welcome",
-      recipients: [{
-        phone: p.phoneNormalized || p.whatsapp,
-        name: p.name,
-        course: p.course,
-        rowIndex: p.rowIndex,
-      }],
-    });
-    showToast("WhatsApp sent to " + p.name, "success");
-  } catch (err) {
-    showToast("WhatsApp failed: " + err.message, "error");
-  }
+  // Store student so WhatsApp center can pre-select them
+  waPreloadStudent = {
+    phone:  p.phoneNormalized || p.whatsapp,
+    name:   p.name,
+    course: p.course,
+  };
+
+  // Reset so WhatsApp screen reinitialises with pre-selected student
+  screenLoaded["whatsapp"] = false;
+  navigateTo("whatsapp");
 }
 
 // ===================== WA HISTORY IN EDIT MODAL =====================
