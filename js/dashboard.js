@@ -139,21 +139,31 @@ function renderMethodsChart(byMethod) {
 
   if (chartMethods) chartMethods.destroy();
 
-  const colors = ["#7C3AED", "#10B981", "#F59E0B", "#EF4444", "#3B82F6"];
+  const labels = byMethod.map(m => m.method);
+  const values = byMethod.map(m => m.amount);
+  const colors = generateColors(labels.length);
 
   chartMethods = new Chart(ctx, {
-    type: "doughnut",
+    type: "bar",
     data: {
-      labels: byMethod.map(m => m.method),
+      labels,
       datasets: [{
-        data: byMethod.map(m => m.amount),
-        backgroundColor: colors.slice(0, byMethod.length),
+        label: "Revenue",
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 6,
       }],
     },
     options: {
       responsive: true,
       plugins: {
-        legend: { position: "bottom" },
+        legend: { display: false },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback: v => formatCurrency(v) },
+        },
       },
     },
   });
