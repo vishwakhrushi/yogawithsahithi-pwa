@@ -87,16 +87,7 @@ function selectTemplate(name, el) {
   el.classList.add("selected");
 
   const student = waSelectedRecipients[0] || null;
-  let batch = null;
-  if (student && student.course) {
-    const prefix = student.course.substring(0, 3).toUpperCase();
-    batch = waBatchesCache.find(b =>
-      b.batchId.toUpperCase().endsWith("-" + prefix) ||
-      b.batchName.toUpperCase().includes(prefix)
-    ) || null;
-  }
-
-  renderTemplateParams("waParamsForm", name, student, batch);
+  renderTemplateParams("waParamsForm", name, student, null);
   updateSendButton();
 }
 
@@ -132,8 +123,30 @@ function renderTemplateParams(formId, templateName, student, batch) {
     recordingsLink: batch   ? batch.recordingsLink: "",
   };
 
+  // Build active batch options for the picker
+  const activeBatches = waBatchesCache.filter(b =>
+    (b.status || "").toLowerCase() === "active"
+  );
+  const batchOptions = activeBatches.map(b =>
+    `<option value="${escHtml(b.batchId)}">${escHtml(b.batchType)} — ${escHtml(b.batchId)}</option>`
+  ).join("");
+
+  // Only show batch picker for individual send (not broadcast which has its own)
+  const showBatchPicker = formId === "waParamsForm";
+
   form.innerHTML = `
     <div style="margin-top:12px;">
+      ${showBatchPicker ? `
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;color:var(--text-muted);">Select Batch</label>
+          <select id="${formId}_batchPicker"
+                  onchange="onIndividualBatchChange('${formId}', '${templateName}')"
+                  style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">
+            <option value="">-- Pick a batch to auto-fill --</option>
+            ${batchOptions}
+          </select>
+        </div>
+      ` : ""}
       <div class="text-sm text-muted" style="margin-bottom:8px;">Template parameters</div>
       ${tmpl.params.map((p, i) => `
         <div style="margin-bottom:8px;">
@@ -177,6 +190,41 @@ function readTemplateParams(formId, templateName) {
   }
 
   return { params, dietFormLink };
+}
+
+/** Called when user picks a batch from the individual send batch picker */
+function onIndividualBatchChange(formId, templateName) {
+  const picker = document.getElementById(formId + "_batchPicker");
+  if (!picker) return;
+
+  const batchId = picker.value;
+  const batch   = batchId ? waBatchesCache.find(b => b.batchId === batchId) || null : null;
+  const student = waSelectedRecipients[0] || null;
+  const tmpl    = templateByName(templateName);
+  if (!tmpl) return;
+
+  // Map of param key → batch field
+  const batchFill = {
+    batchName:      batch ? batch.batchType      : "",
+    classTime:      batch ? batch.classTime      : "",
+    startDate:      batch ? batch.startDate      : "",
+    classDays:      batch ? batch.classDays      : "",
+    zoomLink:       batch ? batch.zoomLink       : "",
+    meetingId:      batch ? batch.meetingId      : "",
+    passcode:       batch ? batch.passcode       : "",
+    recordingsLink: batch ? batch.recordingsLink : "",
+  };
+
+  // Update each param field (skip "name" — keep student name as-is)
+  tmpl.params.forEach((p, i) => {
+    if (p === "name") return;
+    const input = document.getElementById(formId + "_param_" + i);
+    if (input && batchFill[p] !== undefined) input.value = batchFill[p];
+  });
+
+  // Update diet form link if present
+  const dietEl = document.getElementById(formId + "_dietFormLink");
+  if (dietEl && batch) dietEl.value = batch.dietFormLink || "";
 }
 
 // ===================== BATCH LIST =====================
