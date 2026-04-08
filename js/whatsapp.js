@@ -81,12 +81,56 @@ function templateByName(name) {
   return WA_TEMPLATES.find(t => t.name === name) || null;
 }
 
+// Template restrictions by course prefix
+const TEMPLATE_RESTRICTIONS = {
+  PRE: { allowed: "yws_prenatal_batch_onboarding_v1", error: "Prenatal students must use the Prenatal Onboarding template." },
+  EV1: { allowed: "yws_batch_onboarding_v1",          error: "Evening Batch 1 students must use the Batch Onboarding template." },
+  EV2: { allowed: "yws_batch_onboarding_v1",          error: "Evening Batch 2 students must use the Batch Onboarding template." },
+  MOR: { allowed: "yws_batch_onboarding_v1",          error: "Morning Batch students must use the Batch Onboarding template." },
+};
+
+// Courses with no template yet
+const NO_TEMPLATE_COURSES = new Set(["DIET", "KIDS", "FACE", "BACK", "REC", "OTHE"]);
+
+function validateTemplateForStudent(templateName, student) {
+  if (!student || !student.course) return null; // no student selected — no restriction
+
+  const prefix = student.course.substring(0, 3).toUpperCase();
+  const prefix4 = student.course.substring(0, 4).toUpperCase();
+
+  // Courses with no template yet
+  if (NO_TEMPLATE_COURSES.has(prefix) || NO_TEMPLATE_COURSES.has(prefix4)) {
+    return "No WhatsApp template is available for this course type yet. Coming soon.";
+  }
+
+  // Restricted courses — must use specific template
+  const rule = TEMPLATE_RESTRICTIONS[prefix];
+  if (rule && templateName !== rule.allowed) {
+    return rule.error;
+  }
+
+  return null; // valid
+}
+
 function selectTemplate(name, el) {
-  waSelectedTemplate = name;
   document.querySelectorAll("#waTemplates .template-card").forEach(c => c.classList.remove("selected"));
   el.classList.add("selected");
 
-  const student = waSelectedRecipients[0] || null;
+  const student    = waSelectedRecipients[0] || null;
+  const errMsg     = validateTemplateForStudent(name, student);
+  const templateEl = document.getElementById("waTemplateError");
+
+  if (errMsg) {
+    waSelectedTemplate = "";
+    if (templateEl) { templateEl.textContent = errMsg; templateEl.style.display = "block"; }
+    const form = document.getElementById("waParamsForm");
+    if (form) form.innerHTML = "";
+    updateSendButton();
+    return;
+  }
+
+  if (templateEl) { templateEl.textContent = ""; templateEl.style.display = "none"; }
+  waSelectedTemplate = name;
   renderTemplateParams("waParamsForm", name, student, null);
   updateSendButton();
 }
