@@ -123,10 +123,20 @@ function renderTemplateParams(formId, templateName, student, batch) {
     recordingsLink: batch   ? batch.recordingsLink: "",
   };
 
-  // Build active batch options for the picker
-  const activeBatches = waBatchesCache.filter(b =>
-    (b.status || "").toLowerCase() === "active"
-  );
+  // Filter active batches by the student's latest course prefix (EV1, EV2, MOR, PRE etc.)
+  // Falls back to all active batches if no course or course has no batch (DIET, KIDS, etc.)
+  const studentCourse  = student ? (student.course || "").trim() : "";
+  const coursePrefix   = studentCourse.substring(0, 3).toUpperCase(); // "EV1", "MOR", "PRE" etc.
+  const batchCourses   = new Set(["EV1", "EV2", "MOR", "PRE"]); // courses that have batches
+
+  const activeBatches = waBatchesCache.filter(b => {
+    if ((b.status || "").toLowerCase() !== "active") return false;
+    if (coursePrefix && batchCourses.has(coursePrefix)) {
+      return b.batchId.toUpperCase().endsWith("-" + coursePrefix);
+    }
+    return true; // no course prefix match — show all active
+  });
+
   const batchOptions = activeBatches.map(b =>
     `<option value="${escHtml(b.batchId)}">${escHtml(b.batchType)} — ${escHtml(b.batchId)}</option>`
   ).join("");
