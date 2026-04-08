@@ -5,7 +5,6 @@
 let chartCourse = null;
 let chartTrend = null;
 let chartMethods = null;
-let chartBatch = null;
 
 function initAddPayment() {
   // Set default payment date to today
@@ -172,39 +171,47 @@ function renderMethodsChart(byMethod) {
 }
 
 function renderBatchChart(byBatch) {
-  const ctx = document.getElementById("chartBatch");
-  if (!ctx) return;
+  const container = document.getElementById("batchRevenueTable");
+  if (!container) return;
 
-  if (chartBatch) chartBatch.destroy();
+  if (!byBatch || byBatch.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-secondary);font-size:14px;">No data for this period.</p>';
+    return;
+  }
 
-  const labels = byBatch.map(b => b.batch);
-  const values = byBatch.map(b => b.revenue);
-  const colors = generateColors(labels.length);
+  const totalRevenue = byBatch.reduce((s, b) => s + b.revenue, 0);
 
-  chartBatch = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Revenue",
-        data: values,
-        backgroundColor: colors,
-        borderRadius: 6,
-      }],
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { callback: v => formatCurrency(v) },
-        },
-      },
-    },
-  });
+  const rows = byBatch.map(b => {
+    const pct = totalRevenue > 0 ? ((b.revenue / totalRevenue) * 100).toFixed(1) : "0.0";
+    return `
+      <tr>
+        <td style="padding:10px 8px;font-weight:500;">${b.batch}</td>
+        <td style="padding:10px 8px;text-align:right;">${b.count}</td>
+        <td style="padding:10px 8px;text-align:right;font-weight:600;">${formatCurrency(b.revenue)}</td>
+        <td style="padding:10px 8px;text-align:right;color:var(--text-secondary);">${pct}%</td>
+      </tr>`;
+  }).join("");
+
+  container.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border-color);">
+          <th style="padding:8px;text-align:left;color:var(--text-secondary);font-weight:600;">Batch</th>
+          <th style="padding:8px;text-align:right;color:var(--text-secondary);font-weight:600;">Payments</th>
+          <th style="padding:8px;text-align:right;color:var(--text-secondary);font-weight:600;">Revenue</th>
+          <th style="padding:8px;text-align:right;color:var(--text-secondary);font-weight:600;">Share</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+        <tr style="border-top:2px solid var(--border-color);background:var(--surface-color,#f9f9f9);">
+          <td style="padding:10px 8px;font-weight:700;">Total</td>
+          <td style="padding:10px 8px;text-align:right;font-weight:700;">${byBatch.reduce((s,b)=>s+b.count,0)}</td>
+          <td style="padding:10px 8px;text-align:right;font-weight:700;">${formatCurrency(totalRevenue)}</td>
+          <td style="padding:10px 8px;text-align:right;color:var(--text-secondary);">100%</td>
+        </tr>
+      </tbody>
+    </table>`;
 }
 
 function generateColors(count) {
