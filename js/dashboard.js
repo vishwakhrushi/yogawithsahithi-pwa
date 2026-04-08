@@ -5,6 +5,7 @@
 let chartCourse = null;
 let chartTrend = null;
 let chartMethods = null;
+let chartBatch = null;
 
 function initAddPayment() {
   // Set default payment date to today
@@ -55,6 +56,7 @@ async function loadDashboard() {
     renderCourseChart(data.byCourse || []);
     renderTrendChart(data.monthlyTrend || []);
     renderMethodsChart(data.byPaymentMethod || []);
+    renderBatchChart(data.byBatch || []);
 
   } catch (err) {
     showToast("Dashboard: " + err.message, "error");
@@ -144,6 +146,42 @@ function renderMethodsChart(byMethod) {
   const colors = generateColors(labels.length);
 
   chartMethods = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Revenue",
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback: v => formatCurrency(v) },
+        },
+      },
+    },
+  });
+}
+
+function renderBatchChart(byBatch) {
+  const ctx = document.getElementById("chartBatch");
+  if (!ctx) return;
+
+  if (chartBatch) chartBatch.destroy();
+
+  const labels = byBatch.map(b => b.batch);
+  const values = byBatch.map(b => b.revenue);
+  const colors = generateColors(labels.length);
+
+  chartBatch = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
