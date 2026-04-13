@@ -117,125 +117,146 @@ function generateInvoice(idx) {
       <td style="padding:8px 16px;text-align:right;color:#555;">₹${discount.toLocaleString("en-IN")}</td>
     </tr>` : "";
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <title>Invoice ${escInv(invNo)}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; background: #fff; padding: 40px; max-width: 800px; margin: auto; }
-    .header { display: flex; align-items: flex-start; justify-content: space-between; background: #f0edf8; border-radius: 8px; padding: 24px 28px; margin-bottom: 32px; }
-    .header-left { display: flex; align-items: flex-start; gap: 16px; }
-    .header-logo { width: 72px; height: 72px; object-fit: contain; border-radius: 8px; }
-    .header-name { font-size: 22px; font-weight: 700; color: #2d1b6b; }
-    .header-title { font-size: 11px; color: #6b5e99; letter-spacing: 0.5px; max-width: 220px; line-height: 1.5; margin-top: 4px; }
-    .header-contact { text-align: right; font-size: 13px; color: #444; line-height: 1.8; }
-    .invoice-title { text-align: center; font-size: 26px; font-weight: 300; letter-spacing: 6px; color: #2d1b6b; margin-bottom: 32px; }
-    .meta-row { display: flex; justify-content: space-between; margin-bottom: 36px; }
-    .issued-to { font-size: 14px; line-height: 1.8; }
-    .issued-to strong { font-size: 13px; letter-spacing: 1px; color: #2d1b6b; display: block; margin-bottom: 4px; }
-    .invoice-meta { text-align: right; font-size: 13px; line-height: 2; }
-    .invoice-meta .inv-no { font-size: 15px; font-weight: 700; color: #2d1b6b; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
-    thead tr { background: #e8e3f5; }
-    thead th { padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: #2d1b6b; }
-    thead th:not(:first-child) { text-align: right; }
-    tbody tr { border-bottom: 1px solid #f0edf8; }
-    tbody td { padding: 16px 16px; font-size: 14px; vertical-align: top; }
-    tbody td:not(:first-child) { text-align: right; }
-    .totals-section { background: #fafafa; border-top: 1px solid #e8e3f5; }
-    .totals-section td { padding: 10px 16px; font-size: 14px; }
-    .total-row { background: #e8e3f5; }
-    .total-row td { padding: 14px 16px; font-size: 15px; font-weight: 700; color: #2d1b6b; }
-    .footer { margin-top: 48px; display: flex; justify-content: flex-end; flex-direction: column; align-items: flex-end; }
-    .signature { font-family: 'Georgia', serif; font-style: italic; font-size: 22px; color: #2d1b6b; margin-bottom: 4px; }
-    .thank-you { font-size: 13px; font-weight: 700; letter-spacing: 3px; color: #2d1b6b; margin-top: 12px; }
-    @media print {
-      body { padding: 20px; }
-      button { display: none !important; }
-    }
-  </style>
-</head>
-<body>
-  <div style="text-align:right;margin-bottom:12px;">
-    <button onclick="window.print()" style="background:#7C3AED;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;">Print / Save as PDF</button>
-  </div>
+  const html = `
+    <style>
+      .inv-wrap * { box-sizing: border-box; margin: 0; padding: 0; }
+      .inv-wrap { font-family: 'Segoe UI', Arial, sans-serif; color: #333; background: #fff; padding: 40px; max-width: 800px; margin: auto; }
+      .inv-header { display: flex; align-items: flex-start; justify-content: space-between; background: #f0edf8; border-radius: 8px; padding: 24px 28px; margin-bottom: 32px; }
+      .inv-header-left { display: flex; align-items: flex-start; gap: 16px; }
+      .inv-logo { width: 72px; height: 72px; object-fit: contain; border-radius: 8px; }
+      .inv-name { font-size: 22px; font-weight: 700; color: #2d1b6b; }
+      .inv-subtitle { font-size: 11px; color: #6b5e99; letter-spacing: 0.5px; max-width: 220px; line-height: 1.5; margin-top: 4px; }
+      .inv-contact { text-align: right; font-size: 13px; color: #444; line-height: 1.8; }
+      .inv-title { text-align: center; font-size: 26px; font-weight: 300; letter-spacing: 6px; color: #2d1b6b; margin-bottom: 32px; }
+      .inv-meta-row { display: flex; justify-content: space-between; margin-bottom: 36px; }
+      .inv-issued { font-size: 14px; line-height: 1.8; }
+      .inv-issued strong { font-size: 13px; letter-spacing: 1px; color: #2d1b6b; display: block; margin-bottom: 4px; }
+      .inv-meta { text-align: right; font-size: 13px; line-height: 2; }
+      .inv-no { font-size: 15px; font-weight: 700; color: #2d1b6b; }
+      .inv-table { width: 100%; border-collapse: collapse; }
+      .inv-table thead tr { background: #e8e3f5; }
+      .inv-table thead th { padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: #2d1b6b; }
+      .inv-table thead th:not(:first-child) { text-align: right; }
+      .inv-table tbody tr { border-bottom: 1px solid #f0edf8; }
+      .inv-table tbody td { padding: 16px; font-size: 14px; vertical-align: top; }
+      .inv-table tbody td:not(:first-child) { text-align: right; }
+      .inv-totals td { padding: 10px 16px; font-size: 14px; background: #fafafa; border-top: 1px solid #e8e3f5; }
+      .inv-total-row td { padding: 14px 16px; font-size: 15px; font-weight: 700; color: #2d1b6b; background: #e8e3f5; }
+      .inv-footer { margin-top: 48px; display: flex; flex-direction: column; align-items: flex-end; }
+      .inv-signature { font-family: 'Georgia', serif; font-style: italic; font-size: 22px; color: #2d1b6b; }
+      .inv-thankyou { font-size: 13px; font-weight: 700; letter-spacing: 3px; color: #2d1b6b; margin-top: 12px; }
+    </style>
 
-  <div class="header">
-    <div class="header-left">
-      ${logoUrl ? `<img src="${escInv(logoUrl)}" class="header-logo" alt="YWS Logo"/>` : ""}
-      <div>
-        <div class="header-name">Baddipadaga Sahithi</div>
-        <div class="header-title">CERTIFIED YOGA TRAINER AND DIETICIAN IN AYURVEDIC FOOD &amp; NUTRITION</div>
+    <div class="invoice-no-print" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f5f3ff;border-bottom:1px solid #e8e3f5;position:sticky;top:0;z-index:10;">
+      <button onclick="closeInvoice()" style="background:none;border:1px solid #7C3AED;color:#7C3AED;padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">← Back</button>
+      <span style="font-size:13px;font-weight:600;color:#2d1b6b;">Invoice ${escInv(invNo)}</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="downloadInvoice('${escInv(invNo)}')" style="background:#10B981;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">Download</button>
+        <button onclick="window.print()" style="background:#7C3AED;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">Print</button>
       </div>
     </div>
-    <div class="header-contact">
-      <div>📞 +917569564140</div>
-      <div>✉️ Yogawithsahithi@gmail.com</div>
-    </div>
-  </div>
 
-  <div class="invoice-title">INVOICE</div>
+    <div class="inv-wrap">
+      <div class="inv-header">
+        <div class="inv-header-left">
+          ${logoUrl ? `<img src="${escInv(logoUrl)}" class="inv-logo" alt="YWS Logo"/>` : ""}
+          <div>
+            <div class="inv-name">Baddipadaga Sahithi</div>
+            <div class="inv-subtitle">CERTIFIED YOGA TRAINER AND DIETICIAN IN AYURVEDIC FOOD &amp; NUTRITION</div>
+          </div>
+        </div>
+        <div class="inv-contact">
+          <div>📞 +917569564140</div>
+          <div>✉️ Yogawithsahithi@gmail.com</div>
+        </div>
+      </div>
 
-  <div class="meta-row">
-    <div class="issued-to">
-      <strong>ISSUED TO:</strong>
-      Name: ${escInv(p.name || "")}<br>
-      Email: ${escInv(p.email || "")}<br>
-      Contact: ${escInv(phone)}
-    </div>
-    <div class="invoice-meta">
-      <div>INVOICE NO: &nbsp;<span class="inv-no">${escInv(invNo)}</span></div>
-      <div>DATE: &nbsp;${escInv(invDate)}</div>
-      <div>DUE DATE: &nbsp;${escInv(invDate)}</div>
-    </div>
-  </div>
+      <div class="inv-title">INVOICE</div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>DESCRIPTION</th>
-        <th>UNIT PRICE</th>
-        <th>QTY</th>
-        <th>TOTAL</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>${descHtml}</td>
-        <td>${subtotal.toLocaleString("en-IN")}</td>
-        <td>1</td>
-        <td>${subtotal.toLocaleString("en-IN")}</td>
-      </tr>
-    </tbody>
-    <tbody class="totals-section">
-      <tr>
-        <td colspan="3" style="padding:8px 16px;color:#555;">SUBTOTAL</td>
-        <td style="padding:8px 16px;text-align:right;color:#555;">₹${subtotal.toLocaleString("en-IN")}</td>
-      </tr>
-      ${discountRow}
-      <tr class="total-row">
-        <td colspan="3">TOTAL</td>
-        <td style="text-align:right;">₹${total.toLocaleString("en-IN")}</td>
-      </tr>
-    </tbody>
-  </table>
+      <div class="inv-meta-row">
+        <div class="inv-issued">
+          <strong>ISSUED TO:</strong>
+          Name: ${escInv(p.name || "")}<br>
+          Email: ${escInv(p.email || "")}<br>
+          Contact: ${escInv(phone)}
+        </div>
+        <div class="inv-meta">
+          <div>INVOICE NO: &nbsp;<span class="inv-no">${escInv(invNo)}</span></div>
+          <div>DATE: &nbsp;${escInv(invDate)}</div>
+          <div>DUE DATE: &nbsp;${escInv(invDate)}</div>
+        </div>
+      </div>
 
-  <div class="footer">
-    <div class="signature">B. Sahithi.</div>
-    <div class="thank-you">THANK YOU</div>
-  </div>
-</body>
-</html>`;
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th>DESCRIPTION</th>
+            <th>UNIT PRICE</th>
+            <th>QTY</th>
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${descHtml}</td>
+            <td>${subtotal.toLocaleString("en-IN")}</td>
+            <td>1</td>
+            <td>${subtotal.toLocaleString("en-IN")}</td>
+          </tr>
+        </tbody>
+        <tbody class="inv-totals">
+          <tr>
+            <td colspan="3">SUBTOTAL</td>
+            <td style="text-align:right;">₹${subtotal.toLocaleString("en-IN")}</td>
+          </tr>
+          ${discountRow}
+          <tr class="inv-total-row">
+            <td colspan="3">TOTAL</td>
+            <td style="text-align:right;">₹${total.toLocaleString("en-IN")}</td>
+          </tr>
+        </tbody>
+      </table>
 
-  const win = window.open("", "_blank");
-  if (!win) {
-    showToast("Popup blocked — allow popups for this site to generate invoices.", "error");
-    return;
-  }
-  win.document.write(html);
-  win.document.close();
+      <div class="inv-footer">
+        <div class="inv-signature">B. Sahithi.</div>
+        <div class="inv-thankyou">THANK YOU</div>
+      </div>
+    </div>`;
+
+  const overlay = document.getElementById("invoiceOverlay");
+  overlay.innerHTML = html;
+  overlay.style.display = "block";
+  document.body.style.overflow = "hidden";
+}
+
+function closeInvoice() {
+  const overlay = document.getElementById("invoiceOverlay");
+  overlay.style.display = "none";
+  overlay.innerHTML = "";
+  document.body.style.overflow = "";
+}
+
+function downloadInvoice(invNo) {
+  const overlay = document.getElementById("invoiceOverlay");
+  if (!overlay) return;
+
+  // Build a self-contained HTML file (strip the sticky action bar)
+  const content = overlay.querySelector(".inv-wrap");
+  if (!content) return;
+
+  const filename = "invoice-" + (invNo || "").replace("/", "-") + ".html";
+  const blob = new Blob([
+    `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>Invoice ${escInv(invNo)}</title></head><body style="margin:0;">` +
+    overlay.querySelector("style").outerHTML +
+    content.outerHTML +
+    `</body></html>`
+  ], { type: "text/html" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // ===================== HELPERS =====================

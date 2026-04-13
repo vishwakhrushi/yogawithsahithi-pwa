@@ -457,6 +457,18 @@
     </button>
   </nav>
 
+  <!-- ==================== INVOICE OVERLAY ==================== -->
+  <div id="invoiceOverlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;overflow-y:auto;"></div>
+
+  <!-- ==================== PRINT STYLES ==================== -->
+  <style>
+    @media print {
+      body > *:not(#invoiceOverlay) { display: none !important; }
+      #invoiceOverlay { position: static !important; overflow: visible !important; }
+      .invoice-no-print { display: none !important; }
+    }
+  </style>
+
   <!-- ==================== SCRIPTS ==================== -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="js/api.js"></script>
