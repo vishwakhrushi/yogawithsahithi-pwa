@@ -237,26 +237,28 @@ function closeInvoice() {
 }
 
 function downloadInvoice(invNo) {
-  const overlay = document.getElementById("invoiceOverlay");
-  if (!overlay) return;
-
-  // Build a self-contained HTML file (strip the sticky action bar)
-  const content = overlay.querySelector(".inv-wrap");
+  const content = document.querySelector("#invoiceOverlay .inv-wrap");
   if (!content) return;
 
-  const filename = "invoice-" + (invNo || "").replace("/", "-") + ".html";
-  const blob = new Blob([
-    `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>Invoice ${escInv(invNo)}</title></head><body style="margin:0;">` +
-    overlay.querySelector("style").outerHTML +
-    content.outerHTML +
-    `</body></html>`
-  ], { type: "text/html" });
+  const filename = "invoice-" + (invNo || "").replace("/", "-") + ".pdf";
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = "Generating…";
 
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  html2pdf()
+    .set({
+      margin:      [10, 10, 10, 10],
+      filename:    filename,
+      image:       { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF:       { unit: "mm", format: "a4", orientation: "portrait" },
+    })
+    .from(content)
+    .save()
+    .then(() => {
+      btn.disabled = false;
+      btn.textContent = "Download";
+    });
 }
 
 // ===================== HELPERS =====================
