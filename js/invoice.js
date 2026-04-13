@@ -123,7 +123,7 @@ function generateInvoice(idx) {
       .inv-wrap { font-family: 'Segoe UI', Arial, sans-serif; color: #333; background: #fff; padding: 40px; max-width: 800px; margin: auto; }
       .inv-header { display: flex; align-items: flex-start; justify-content: space-between; background: #f0edf8; border-radius: 8px; padding: 24px 28px; margin-bottom: 32px; }
       .inv-header-left { display: flex; align-items: flex-start; gap: 16px; }
-      .inv-logo { width: 72px; height: 72px; object-fit: contain; border-radius: 8px; }
+      .inv-logo { width: auto; height: auto; max-width: 80px; max-height: 80px; object-fit: contain; border-radius: 8px; }
       .inv-name { font-size: 22px; font-weight: 700; color: #2d1b6b; }
       .inv-subtitle { font-size: 11px; color: #6b5e99; letter-spacing: 0.5px; max-width: 220px; line-height: 1.5; margin-top: 4px; }
       .inv-contact { text-align: right; font-size: 13px; color: #444; line-height: 1.8; }
