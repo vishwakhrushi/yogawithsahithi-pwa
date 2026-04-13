@@ -97,8 +97,9 @@ function generateInvoice(idx) {
   const course    = p.course || "";
   const amount    = parseFloat(p.amount) || 0;
   const stdRate   = INVOICE_RATES[course.toUpperCase()] || null;
+  // If paid > standard rate, treat paid amount as the actual price (no discount)
+  const subtotal  = stdRate && stdRate > amount ? stdRate : amount;
   const discount  = stdRate && stdRate > amount ? stdRate - amount : 0;
-  const subtotal  = stdRate || amount;
   const total     = amount;
   const descLines = invoiceDescription(course).split("\n");
   const invNo     = invoiceNumber(p.rowIndex);
