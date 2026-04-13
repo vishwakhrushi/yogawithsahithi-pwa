@@ -204,6 +204,7 @@ function renderPayments() {
           <div class="detail-actions">
             ${hasRole("STAFF") ? `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openEditModal(${idx})">Edit</button>` : ""}
             ${hasRole("STAFF") ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation(); quickWhatsApp(${idx})">WhatsApp</button>` : ""}
+            ${hasRole("STAFF") && (p.paymentAccount || "").toLowerCase() !== "playeven" ? `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); generateInvoice(${idx})">Invoice</button>` : ""}
           </div>
         </div>
       </div>

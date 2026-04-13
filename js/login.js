@@ -43,6 +43,7 @@ async function doLogin() {
       // Save auth
       const remember = document.getElementById("loginRemember").checked;
       api.setAuth(url, token, result.email, result.role);
+      if (result.logoUrl) localStorage.setItem("YWSH_LOGO_URL", result.logoUrl);
 
       if (!remember) {
         // Clear from localStorage on page unload if not remembering

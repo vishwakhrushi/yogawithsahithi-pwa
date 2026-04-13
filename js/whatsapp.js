@@ -90,7 +90,8 @@ const TEMPLATE_RESTRICTIONS = {
 };
 
 // Courses with no template yet
-const NO_TEMPLATE_COURSES = new Set(["DIET", "KIDS", "FACE", "BACK", "REC", "OTHE"]);
+// Prefix-matched (first 3 chars of course code) courses with no template yet
+const NO_TEMPLATE_COURSE_PREFIXES = new Set(["DIE", "KID", "FAC", "BP-", "REC", "OTH"]);
 
 function validateTemplateForStudent(templateName, student) {
   if (!student || !student.course) return null; // no student selected — no restriction
@@ -98,8 +99,8 @@ function validateTemplateForStudent(templateName, student) {
   const prefix = student.course.substring(0, 3).toUpperCase();
   const prefix4 = student.course.substring(0, 4).toUpperCase();
 
-  // Courses with no template yet
-  if (NO_TEMPLATE_COURSES.has(prefix) || NO_TEMPLATE_COURSES.has(prefix4)) {
+  // Courses with no template yet (matched by 3-char prefix)
+  if (NO_TEMPLATE_COURSE_PREFIXES.has(prefix)) {
     return "No WhatsApp template is available for this course type yet. Coming soon.";
   }
 
