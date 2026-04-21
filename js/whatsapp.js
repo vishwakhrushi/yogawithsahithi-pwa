@@ -1,10 +1,12 @@
 /**
  * whatsapp.js — Individual + broadcast send UI
  *
- * Uses 3 approved Meta templates:
+ * Uses approved Meta templates:
  *   yws_batch_onboarding_v1          — 9 params + diet form URL button
  *   yws_prenatal_batch_onboarding_v1 — 9 params, no button
  *   yws_weekly_zoom_reminder_v1      — 7 params
+ *   yws_class_cancellation_v1        — 1 param, broadcastOnly
+ *   yws_batch_postponement_v1        — 2 params, broadcastOnly
  */
 
 const WA_TEMPLATES = [
@@ -37,6 +39,24 @@ const WA_TEMPLATES = [
              "Class Days", "Zoom Link", "Meeting ID", "Passcode", "Recordings Link"],
     hasDietButton: false,
   },
+  {
+    name:          "yws_class_cancellation_v1",
+    label:         "Class Cancellation",
+    desc:          "Notify the whole batch about a cancelled class",
+    params:        ["batch_name"],
+    labels:        ["Batch Name"],
+    hasDietButton: false,
+    broadcastOnly: true,   // hidden in individual send tab
+  },
+  {
+    name:          "yws_batch_postponement_v1",
+    label:         "Batch Postponement",
+    desc:          "Notify the whole batch about a postponed start date",
+    params:        ["batch_name", "new_start_date"],
+    labels:        ["Batch Name", "New Start Date (DD/MM/YYYY)"],
+    hasDietButton: false,
+    broadcastOnly: true,   // hidden in individual send tab
+  },
 ];
 
 let waSelectedTemplate       = "";
@@ -68,7 +88,10 @@ function renderTemplates(containerId, isBroadcast) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  container.innerHTML = WA_TEMPLATES.map(t => `
+  // broadcastOnly templates are hidden from the individual send tab
+  const visible = isBroadcast ? WA_TEMPLATES : WA_TEMPLATES.filter(t => !t.broadcastOnly);
+
+  container.innerHTML = visible.map(t => `
     <div class="template-card" data-template="${t.name}"
          onclick="${isBroadcast ? "selectBroadcastTemplate" : "selectTemplate"}('${t.name}', this)">
       <div class="tc-name">${escHtml(t.label)}</div>
@@ -137,11 +160,22 @@ function selectTemplate(name, el) {
 }
 
 function selectBroadcastTemplate(name, el) {
+  const prevTemplate = waBroadcastSelectedTemplate;
   waBroadcastSelectedTemplate = name;
   document.querySelectorAll("#waBroadcastTemplates .template-card").forEach(c => c.classList.remove("selected"));
   el.classList.add("selected");
   renderTemplateParams("waBroadcastParamsForm", name, null, waBroadcastSelectedBatch);
   updateBroadcastSendButton();
+
+  // If switching to/from a cancellation or postponement template and a batch is already
+  // selected, reload recipients from the appropriate source.
+  if (waBroadcastSelectedBatch && name !== prevTemplate) {
+    const isNewCancelPostpone = isCancelPostponeTemplate_(name);
+    const wasOtherCancelPostpone = isCancelPostponeTemplate_(prevTemplate);
+    if (isNewCancelPostpone || wasOtherCancelPostpone) {
+      reloadBroadcastRecipients_(waBroadcastSelectedBatch.batchId, name);
+    }
+  }
 }
 
 /**
@@ -166,6 +200,9 @@ function renderTemplateParams(formId, templateName, student, batch) {
     meetingId:      batch   ? batch.meetingId     : "",
     passcode:       batch   ? batch.passcode      : "",
     recordingsLink: batch   ? batch.recordingsLink: "",
+    // Cancellation / postponement
+    batch_name:     batch   ? batch.batchType     : "",
+    new_start_date: "",   // user must fill in the new date
   };
 
   // Filter active batches by the student's latest course prefix (EV1, EV2, MOR, PRE etc.)
@@ -284,21 +321,83 @@ function onIndividualBatchChange(formId, templateName) {
 
 // ===================== BATCH LIST =====================
 
+/** True if the template is a class cancellation or batch postponement template */
+function isCancelPostponeTemplate_(templateName) {
+  return templateName === "yws_class_cancellation_v1" ||
+         templateName === "yws_batch_postponement_v1";
+}
+
 async function loadBatchList() {
+  const select = document.getElementById("waBatchSelect");
+  if (select) select.innerHTML = '<option value="">Loading batches…</option>';
+
   try {
     const result = await api.get("getBatches");
     waBatchesCache = result.batches || [];
 
-    const select = document.getElementById("waBatchSelect");
     if (!select) return;
 
-    // Only show active batches
-    const active = waBatchesCache.filter(b => b.status === "Active" || b.status === "active");
+    // Show active batches from live batch families (EV1, EV2, MOR, PRE)
+    const LIVE_FAMILIES = new Set(["EV1", "EV2", "MOR", "PRE"]);
+    const active = waBatchesCache.filter(b => {
+      if ((b.status || "").toLowerCase() !== "active") return false;
+      // Match by suffix of Batch_ID: YWS-YYYYMMDD-EV1 → "EV1"
+      const parts = (b.batchId || "").split("-");
+      const family = parts[parts.length - 1].toUpperCase();
+      return LIVE_FAMILIES.has(family);
+    });
+
     select.innerHTML = '<option value="">-- Select batch --</option>' +
-      active.map(b => `<option value="${escHtml(b.batchId)}">${escHtml(b.batchName)}</option>`).join("");
+      active.map(b => `<option value="${escHtml(b.batchId)}">${escHtml(b.batchName || b.batchType)} — ${escHtml(b.batchId)}</option>`).join("");
   } catch (err) {
     console.error("Failed to load batches:", err.message);
+    if (select) select.innerHTML = '<option value="">-- Failed to load batches --</option>';
   }
+}
+
+/**
+ * Load broadcast recipients from the ONBOARDING_<batchId> sheet (cancellation/postponement flow).
+ */
+async function reloadBroadcastRecipients_(batchId, templateName) {
+  const preview = document.getElementById("waBroadcastPreview");
+  const countEl = document.getElementById("waBroadcastCount");
+  const namesEl = document.getElementById("waBroadcastNames");
+
+  if (!batchId) {
+    waBroadcastRecipients = [];
+    if (preview) preview.style.display = "none";
+    updateBroadcastSendButton();
+    return;
+  }
+
+  try {
+    if (isCancelPostponeTemplate_(templateName)) {
+      // Use ONBOARDING sheet recipients for cancellation/postponement
+      const result = await api.get("getBatchRecipients", { batchId });
+      waBroadcastRecipients = (result.recipients || [])
+        .filter(r => r.phone)
+        .map(r => ({ phone: r.phone, name: r.name, course: "" }));
+    } else {
+      // Use student list for other broadcast templates
+      const result = await api.get("getStudents", { batch: batchId, pageSize: 200 });
+      waBroadcastRecipients = (result.students || [])
+        .filter(s => s.phone)
+        .map(s => ({ phone: s.phone, name: s.name, course: s.currentCourse }));
+    }
+
+    if (preview) preview.style.display = "block";
+    if (countEl) countEl.textContent = waBroadcastRecipients.length;
+    if (namesEl) {
+      namesEl.textContent = waBroadcastRecipients.slice(0, 5).map(r => r.name).join(", ") +
+        (waBroadcastRecipients.length > 5 ? "…" : "");
+    }
+  } catch (err) {
+    showToast(err.message, "error");
+    waBroadcastRecipients = [];
+    if (preview) preview.style.display = "none";
+  }
+
+  updateBroadcastSendButton();
 }
 
 // ===================== INDIVIDUAL SEND =====================
@@ -393,13 +492,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function onBatchSelectChange() {
   const batchId = document.getElementById("waBatchSelect")?.value || "";
-  const preview = document.getElementById("waBroadcastPreview");
-  const countEl = document.getElementById("waBroadcastCount");
-  const namesEl = document.getElementById("waBroadcastNames");
 
   if (!batchId) {
     waBroadcastRecipients = [];
     waBroadcastSelectedBatch = null;
+    const preview = document.getElementById("waBroadcastPreview");
     if (preview) preview.style.display = "none";
     updateBroadcastSendButton();
     return;
@@ -407,30 +504,21 @@ async function onBatchSelectChange() {
 
   waBroadcastSelectedBatch = waBatchesCache.find(b => b.batchId === batchId) || null;
 
-  // Auto-select template from batch if available
-  if (waBroadcastSelectedBatch && waBroadcastSelectedBatch.templateName) {
-    const tn = waBroadcastSelectedBatch.templateName;
+  // Auto-select template from batch if available (only for non-cancel/postpone templates)
+  if (waBroadcastSelectedBatch && waBroadcastSelectedBatch.templateName &&
+      !isCancelPostponeTemplate_(waBroadcastSelectedBatch.templateName)) {
+    const tn   = waBroadcastSelectedBatch.templateName;
     const card = document.querySelector(`#waBroadcastTemplates [data-template="${tn}"]`);
     if (card) selectBroadcastTemplate(tn, card);
   }
 
-  try {
-    const result = await api.get("getStudents", { batch: batchId, pageSize: 200 });
-    waBroadcastRecipients = (result.students || [])
-      .filter(s => s.phone)
-      .map(s => ({ phone: s.phone, name: s.name, course: s.currentCourse }));
-
-    if (preview) preview.style.display = "block";
-    if (countEl) countEl.textContent = waBroadcastRecipients.length;
-    if (namesEl) {
-      namesEl.textContent = waBroadcastRecipients.slice(0, 5).map(r => r.name).join(", ")
-        + (waBroadcastRecipients.length > 5 ? "..." : "");
-    }
-
-    updateBroadcastSendButton();
-  } catch (err) {
-    showToast(err.message, "error");
+  // Re-render params form so batch details auto-fill
+  if (waBroadcastSelectedTemplate) {
+    renderTemplateParams("waBroadcastParamsForm", waBroadcastSelectedTemplate, null, waBroadcastSelectedBatch);
   }
+
+  // Load recipients (source depends on current template)
+  await reloadBroadcastRecipients_(batchId, waBroadcastSelectedTemplate);
 }
 
 function updateBroadcastSendButton() {
@@ -470,6 +558,11 @@ async function sendWhatsApp(type) {
   try {
     const body = { type, templateName: template, templateParams: params, recipients };
     if (dietFormLink) body.dietFormLink = dietFormLink;
+    // For broadcast cancellation/postponement, pass batchId so the backend can
+    // update WA_CANCELLATION_SENT / WA_POSTPONEMENT_SENT in the Batches sheet.
+    if (!isIndividual && waBroadcastSelectedBatch && isCancelPostponeTemplate_(template)) {
+      body.batchId = waBroadcastSelectedBatch.batchId;
+    }
 
     console.log("[WA send] full payload:", JSON.stringify(body));
     const result = await api.post("sendWhatsApp", body);
