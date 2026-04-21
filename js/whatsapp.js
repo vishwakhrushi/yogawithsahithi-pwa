@@ -43,17 +43,17 @@ const WA_TEMPLATES = [
     name:          "yws_class_cancellation_v1",
     label:         "Class Cancellation",
     desc:          "Notify the whole batch about a cancelled class",
-    params:        ["batch_name"],
-    labels:        ["Batch Name"],
+    params:        ["batch_name", "class_time", "date", "reason", "next_class"],
+    labels:        ["Batch Name", "Class Time", "Cancelled Date (e.g. 4/04/2026)", "Reason", "Next Class Date (e.g. 16/04/2026)"],
     hasDietButton: false,
     broadcastOnly: true,   // hidden in individual send tab
   },
   {
     name:          "yws_batch_postponement_v1",
     label:         "Batch Postponement",
-    desc:          "Notify the whole batch about a postponed start date",
-    params:        ["batch_name", "new_start_date"],
-    labels:        ["Batch Name", "New Start Date (DD/MM/YYYY)"],
+    desc:          "Notify the whole batch about a postponed batch start date",
+    params:        ["batch_name", "class_time", "old_date", "new_date", "reason"],
+    labels:        ["Batch Name", "Class Time", "Original Date (DD/MM/YYYY)", "New Date (DD/MM/YYYY)", "Reason"],
     hasDietButton: false,
     broadcastOnly: true,   // hidden in individual send tab
   },
@@ -200,9 +200,14 @@ function renderTemplateParams(formId, templateName, student, batch) {
     meetingId:      batch   ? batch.meetingId     : "",
     passcode:       batch   ? batch.passcode      : "",
     recordingsLink: batch   ? batch.recordingsLink: "",
-    // Cancellation / postponement
-    batch_name:     batch   ? batch.batchType     : "",
-    new_start_date: "",   // user must fill in the new date
+    // Cancellation / postponement (batch_name + class_time auto-filled; dates/reason user-entered)
+    batch_name:  batch ? batch.batchType  : "",
+    class_time:  batch ? batch.classTime  : "",
+    date:        "",
+    reason:      "",
+    next_class:  "",
+    old_date:    "",
+    new_date:    "",
   };
 
   // Filter active batches by the student's latest course prefix (EV1, EV2, MOR, PRE etc.)
