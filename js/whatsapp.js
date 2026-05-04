@@ -237,15 +237,18 @@ function renderTemplateParams(formId, templateName, student, batch) {
         </div>
       ` : ""}
       <div class="text-sm text-muted" style="margin-bottom:8px;">Template parameters</div>
-      ${tmpl.params.map((p, i) => `
+      ${tmpl.params.map((p, i) => {
+        const isBroadcastName = !showBatchPicker && p === "name";
+        return `
         <div style="margin-bottom:8px;">
-          <label style="font-size:12px;color:var(--text-muted);">${escHtml(tmpl.labels[i])}</label>
+          <label style="font-size:12px;color:var(--text-muted);">${escHtml(tmpl.labels[i])}${isBroadcastName ? ' <span style="color:var(--primary)">(auto — each recipient\'s name)</span>' : ''}</label>
           <input id="${formId}_param_${i}" type="text"
-                 value="${escHtml(prefill[p] || "")}"
-                 placeholder="${escHtml(tmpl.labels[i])}"
-                 style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;" />
+                 value="${escHtml(isBroadcastName ? "" : prefill[p] || "")}"
+                 placeholder="${isBroadcastName ? "Auto-filled per recipient" : escHtml(tmpl.labels[i])}"
+                 ${isBroadcastName ? "readonly" : ""}
+                 style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;${isBroadcastName ? "background:var(--bg-secondary);color:var(--text-muted);" : ""}" />
         </div>
-      `).join("")}
+      `}).join("")}
       ${tmpl.hasDietButton ? `
         <div style="margin-bottom:8px;">
           <label style="font-size:12px;color:var(--text-muted);">Diet Form Link (button URL)</label>
