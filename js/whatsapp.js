@@ -61,6 +61,7 @@ const WA_TEMPLATES = [
 
 let waSelectedTemplate       = "";
 let waSelectedRecipients     = [];
+let waSearchResults          = [];   // holds last search result for index-based selection
 let waBroadcastSelectedTemplate = "";
 let waBroadcastRecipients    = [];
 let waBatchesCache           = [];        // loaded once from API
@@ -160,22 +161,13 @@ function selectTemplate(name, el) {
 }
 
 function selectBroadcastTemplate(name, el) {
-  const prevTemplate = waBroadcastSelectedTemplate;
   waBroadcastSelectedTemplate = name;
   document.querySelectorAll("#waBroadcastTemplates .template-card").forEach(c => c.classList.remove("selected"));
   el.classList.add("selected");
   renderTemplateParams("waBroadcastParamsForm", name, null, waBroadcastSelectedBatch);
   updateBroadcastSendButton();
-
-  // If switching to/from a cancellation or postponement template and a batch is already
-  // selected, reload recipients from the appropriate source.
-  if (waBroadcastSelectedBatch && name !== prevTemplate) {
-    const isNewCancelPostpone = isCancelPostponeTemplate_(name);
-    const wasOtherCancelPostpone = isCancelPostponeTemplate_(prevTemplate);
-    if (isNewCancelPostpone || wasOtherCancelPostpone) {
-      reloadBroadcastRecipients_(waBroadcastSelectedBatch.batchId, name);
-    }
-  }
+  // Recipients come from the ONBOARDING sheet and are loaded once on batch select;
+  // they do not change when the template changes.
 }
 
 /**
@@ -363,7 +355,7 @@ async function loadBatchList() {
 /**
  * Load broadcast recipients from the ONBOARDING_<batchId> sheet (cancellation/postponement flow).
  */
-async function reloadBroadcastRecipients_(batchId, templateName) {
+async function reloadBroadcastRecipients_(batchId) {
   const preview = document.getElementById("waBroadcastPreview");
   const countEl = document.getElementById("waBroadcastCount");
   const namesEl = document.getElementById("waBroadcastNames");
@@ -376,19 +368,12 @@ async function reloadBroadcastRecipients_(batchId, templateName) {
   }
 
   try {
-    if (isCancelPostponeTemplate_(templateName)) {
-      // Use ONBOARDING sheet recipients for cancellation/postponement
-      const result = await api.get("getBatchRecipients", { batchId });
-      waBroadcastRecipients = (result.recipients || [])
-        .filter(r => r.phone)
-        .map(r => ({ phone: r.phone, name: r.name, course: "" }));
-    } else {
-      // Use student list for other broadcast templates
-      const result = await api.get("getStudents", { batch: batchId, pageSize: 200 });
-      waBroadcastRecipients = (result.students || [])
-        .filter(s => s.phone)
-        .map(s => ({ phone: s.phone, name: s.name, course: s.currentCourse }));
-    }
+    // Always use the ONBOARDING_<batchId> sheet — the authoritative enrolled list
+    // for this specific batch.  All active batches are guaranteed to have this sheet.
+    const result = await api.get("getBatchRecipients", { batchId });
+    waBroadcastRecipients = (result.recipients || [])
+      .filter(r => r.phone)
+      .map(r => ({ phone: r.phone, name: r.name, course: "" }));
 
     if (preview) preview.style.display = "block";
     if (countEl) countEl.textContent = waBroadcastRecipients.length;
@@ -427,6 +412,7 @@ async function searchWaRecipients() {
 }
 
 function renderWaRecipientList(students) {
+  waSearchResults = students;
   const container = document.getElementById("waRecipientList");
   if (!container) return;
 
@@ -435,9 +421,9 @@ function renderWaRecipientList(students) {
     return;
   }
 
-  container.innerHTML = students.map(s => `
-    <div class="payment-card" style="cursor:pointer;"
-         onclick="selectWaRecipient('${escHtml(s.phone)}', '${escHtml(s.name)}', '${escHtml(s.currentCourse || "")}')">
+  // Use index-based onclick to avoid single-quote escaping issues with names/phones
+  container.innerHTML = students.map((s, idx) => `
+    <div class="payment-card" style="cursor:pointer;" onclick="selectWaSearchResult(${idx})">
       <div class="pc-header">
         <div>
           <div class="pc-name">${escHtml(s.name)}</div>
@@ -447,6 +433,12 @@ function renderWaRecipientList(students) {
       </div>
     </div>
   `).join("");
+}
+
+function selectWaSearchResult(idx) {
+  const s = waSearchResults[idx];
+  if (!s) return;
+  selectWaRecipient(s.phone, s.name, s.currentCourse || "");
 }
 
 function selectWaRecipient(phone, name, course) {
@@ -509,9 +501,8 @@ async function onBatchSelectChange() {
 
   waBroadcastSelectedBatch = waBatchesCache.find(b => b.batchId === batchId) || null;
 
-  // Auto-select template from batch if available (only for non-cancel/postpone templates)
-  if (waBroadcastSelectedBatch && waBroadcastSelectedBatch.templateName &&
-      !isCancelPostponeTemplate_(waBroadcastSelectedBatch.templateName)) {
+  // Auto-select template from batch if the batch config specifies one
+  if (waBroadcastSelectedBatch && waBroadcastSelectedBatch.templateName) {
     const tn   = waBroadcastSelectedBatch.templateName;
     const card = document.querySelector(`#waBroadcastTemplates [data-template="${tn}"]`);
     if (card) selectBroadcastTemplate(tn, card);
@@ -522,8 +513,8 @@ async function onBatchSelectChange() {
     renderTemplateParams("waBroadcastParamsForm", waBroadcastSelectedTemplate, null, waBroadcastSelectedBatch);
   }
 
-  // Load recipients (source depends on current template)
-  await reloadBroadcastRecipients_(batchId, waBroadcastSelectedTemplate);
+  // Load recipients from ONBOARDING_<batchId> sheet
+  await reloadBroadcastRecipients_(batchId);
 }
 
 function updateBroadcastSendButton() {
@@ -545,12 +536,6 @@ async function sendWhatsApp(type) {
 
   const { params, dietFormLink } = readTemplateParams(formId, template);
 
-  // Debug log
-  console.log("[WA send] template:", template);
-  console.log("[WA send] params:", params);
-  console.log("[WA send] dietFormLink:", dietFormLink);
-  console.log("[WA send] recipients:", recipients);
-
   // Confirm broadcast
   if (!isIndividual && recipients.length > 1) {
     if (!confirm(`Send "${template}" to ${recipients.length} students?`)) return;
@@ -569,9 +554,7 @@ async function sendWhatsApp(type) {
       body.batchId = waBroadcastSelectedBatch.batchId;
     }
 
-    console.log("[WA send] full payload:", JSON.stringify(body));
     const result = await api.post("sendWhatsApp", body);
-    console.log("[WA send] result:", JSON.stringify(result));
 
     const msg = `Sent: ${result.sent}, Failed: ${result.failed}`;
     // Show per-recipient errors if any failed

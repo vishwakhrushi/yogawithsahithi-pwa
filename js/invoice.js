@@ -59,9 +59,9 @@ function invoiceDescription(course) {
 
 function invoiceNumber(rowIndex) {
   // rowIndex is the sheet row (1=header, so data starts at 2)
-  // Invoice number = 2026/<rowIndex - 1> zero-padded to 3 digits
+  // Invoice number = <currentYear>/<rowIndex - 1> zero-padded to 3 digits
   const num = String(Math.max(1, (rowIndex || 1) - 1)).padStart(3, "0");
-  return "2026/" + num;
+  return new Date().getFullYear() + "/" + num;
 }
 
 // ===================== DATE FORMATTING =====================

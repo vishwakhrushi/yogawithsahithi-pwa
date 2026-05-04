@@ -9,7 +9,7 @@ const SCREENS = ["login", "dashboard", "add-payment", "payments", "students", "w
 // Min role required per screen (null = no auth needed)
 const SCREEN_ROLES = {
   "login":       null,
-  "dashboard":   "MANAGER",
+  "dashboard":   "ADMIN",
   "add-payment": "STAFF",
   "payments":    "VIEW_ONLY",
   "students":    "VIEW_ONLY",
@@ -25,7 +25,7 @@ function navigateTo(screen, navBtn) {
 
 function handleRoute() {
   const hash = (window.location.hash || "").replace("#/", "");
-  const screen = SCREENS.includes(hash) ? hash : (api.isLoggedIn() ? "dashboard" : "login");
+  const screen = SCREENS.includes(hash) ? hash : (api.isLoggedIn() ? (hasRole("ADMIN") ? "dashboard" : "payments") : "login");
 
   // Auth check
   const minRole = SCREEN_ROLES[screen];
@@ -35,7 +35,7 @@ function handleRoute() {
   }
   if (minRole && !hasRole(minRole)) {
     showToast("You don't have permission to access this screen", "error");
-    window.location.hash = hasRole("MANAGER") ? "#/dashboard" : "#/payments";
+    window.location.hash = "#/payments";
     return;
   }
 
@@ -92,7 +92,11 @@ document.addEventListener("DOMContentLoaded", () => {
 function updateNavVisibility() {
   const role = api.role;
 
-  // Hide "Add" and "WhatsApp" for VIEW_ONLY
+  // Dashboard — ADMIN only
+  const navDash = document.getElementById("navDashboard");
+  if (navDash) navDash.style.display = hasRole("ADMIN") ? "flex" : "none";
+
+  // "Add" — STAFF+; "WhatsApp" — MANAGER+
   const navAdd = document.getElementById("navAddPayment");
   const navWa  = document.getElementById("navWhatsApp");
   if (navAdd) navAdd.style.display = hasRole("STAFF") ? "flex" : "none";
@@ -117,8 +121,8 @@ function onLoginSuccess() {
   // Reset screen loaded state so they reload with fresh data
   Object.keys(screenLoaded).forEach(k => delete screenLoaded[k]);
   updateNavVisibility();
-  // MANAGER+ land on dashboard; VIEW_ONLY and STAFF land on payments
-  window.location.hash = hasRole("MANAGER") ? "#/dashboard" : "#/payments";
+  // ADMIN lands on dashboard; everyone else lands on payments
+  window.location.hash = hasRole("ADMIN") ? "#/dashboard" : "#/payments";
 }
 
 function logout() {

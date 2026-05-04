@@ -109,7 +109,7 @@ function renderTrendChart(trend) {
     data: {
       labels: trend.map(t => t.month),
       datasets: [{
-        label: "Revenue",
+        label: "Net Revenue",
         data: trend.map(t => t.revenue),
         borderColor: "#7C3AED",
         backgroundColor: "rgba(124, 58, 237, 0.1)",

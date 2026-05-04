@@ -112,7 +112,7 @@ function renderStudents() {
         </div>
         ${hasRole("STAFF") ? `
         <div style="margin-top:12px;">
-          <button class="btn btn-success btn-sm" onclick="quickStudentWhatsApp('${escHtml(s.phone)}', '${escHtml(s.name)}')">
+          <button class="btn btn-success btn-sm" onclick="openStudentWhatsApp(${idx})">
             &#x1F4AC; WhatsApp
           </button>
         </div>` : ""}
@@ -121,17 +121,13 @@ function renderStudents() {
   }).join("");
 }
 
-async function quickStudentWhatsApp(phone, name) {
-  try {
-    await api.post("sendWhatsApp", {
-      type: "individual",
-      templateName: "welcome",
-      recipients: [{ phone, name }],
-    });
-    showToast("WhatsApp sent to " + name, "success");
-  } catch (err) {
-    showToast("WhatsApp failed: " + err.message, "error");
-  }
+function openStudentWhatsApp(idx) {
+  const s = studentsData[idx];
+  if (!s) return;
+  // Navigate to WhatsApp center with this student pre-selected
+  waPreloadStudent = { phone: s.phone, name: s.name, course: s.currentCourse || "" };
+  screenLoaded["whatsapp"] = false;
+  navigateTo("whatsapp");
 }
 
 // Search on Enter
