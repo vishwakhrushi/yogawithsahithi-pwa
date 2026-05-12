@@ -475,6 +475,29 @@ select {
 .badge-red    { background: var(--danger-light);  color: #991B1B; }
 .badge-gray   { background: var(--border-light);  color: var(--text-muted); }
 
+/* WA + Drive status strip */
+.payment-card .pc-status-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: default;
+}
+
+.status-sent    { background: var(--success-light); color: #065F46; }
+.status-pending { background: var(--border-light);  color: var(--text-muted); }
+
 /* Expanded payment details */
 .payment-card .pc-details {
   display: none;

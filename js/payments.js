@@ -175,10 +175,52 @@ function renderPayments() {
     return;
   }
 
+  const DRIVE_COURSES = new Set(["FACEYOGA", "BP-1M", "BP-3M", "REC-1M", "REC-3M"]);
+
   container.innerHTML = paymentsData.map((p, idx) => {
     const isRefund = p.course === "REFUND" || p.amount < 0;
     const amountClass = isRefund ? "pc-amount refund" : "pc-amount";
     const amountPrefix = isRefund ? "-" : "";
+
+    // WA status badge — shown for all non-REFUND payments
+    const showWa  = !isRefund && p.course !== "OTHER";
+    const wa      = p.waStatus || {};
+    const waBadge = showWa
+      ? `<span class="status-badge ${wa.sent ? "status-sent" : "status-pending"}" title="${wa.sent ? `Sent: ${escHtml(wa.sentAt || "")} via ${escHtml(wa.template || "")}` : "WhatsApp not sent yet"}">
+           ${wa.sent ? "✓" : "–"} WA
+         </span>`
+      : "";
+
+    // Drive status badge — shown only for courses that grant Drive access
+    const showDrive  = DRIVE_COURSES.has(p.course);
+    const dr         = p.driveStatus || {};
+    const driveBadge = showDrive
+      ? `<span class="status-badge ${dr.granted ? "status-sent" : "status-pending"}" title="${dr.granted ? `Drive granted: ${escHtml(dr.grantedAt || "")} · Expires: ${escHtml(dr.expiryDate || "")}` : "Drive access not granted yet"}">
+           ${dr.granted ? "✓" : "–"} Drive
+         </span>`
+      : "";
+
+    // WA detail row (shown in expanded section)
+    const waDetail = showWa
+      ? `<div class="detail-row">
+           <span class="detail-label">WhatsApp</span>
+           <span>${wa.sent
+             ? `<span class="status-badge status-sent">✓ Sent</span> ${escHtml(wa.template || "")} · ${escHtml(wa.sentAt || "")}${wa.sentBy ? " by " + escHtml(wa.sentBy) : ""}`
+             : `<span class="status-badge status-pending">– Not sent</span>`}
+           </span>
+         </div>`
+      : "";
+
+    // Drive detail row (shown in expanded section)
+    const driveDetail = showDrive
+      ? `<div class="detail-row">
+           <span class="detail-label">Drive</span>
+           <span>${dr.granted
+             ? `<span class="status-badge status-sent">✓ Granted</span> ${escHtml(dr.grantedAt || "")} · Expires ${escHtml(dr.expiryDate || "")}`
+             : `<span class="status-badge status-pending">– Not granted</span>`}
+           </span>
+         </div>`
+      : "";
 
     return `
       <div class="payment-card" onclick="togglePaymentCard(this)" data-idx="${idx}">
@@ -194,10 +236,13 @@ function renderPayments() {
           <span>&#x1F4B1; ${escHtml(p.paymentAccount)}</span>
           ${p.phoneNormalized ? `<span>&#x1F4DE; ${escHtml(p.phoneNormalized)}</span>` : ""}
         </div>
+        ${(waBadge || driveBadge) ? `<div class="pc-status-row">${waBadge}${driveBadge}</div>` : ""}
         <div class="pc-details">
           ${p.email ? `<div class="detail-row"><span class="detail-label">Email</span><span>${escHtml(p.email)}</span></div>` : ""}
           ${p.transactionId ? `<div class="detail-row"><span class="detail-label">Txn ID</span><span>${escHtml(p.transactionId)}</span></div>` : ""}
           ${p.remarks ? `<div class="detail-row"><span class="detail-label">Remarks</span><span>${escHtml(p.remarks)}</span></div>` : ""}
+          ${waDetail}
+          ${driveDetail}
           ${p.updatedBy ? `<div class="detail-row"><span class="detail-label">Updated By</span><span>${escHtml(p.updatedBy)}</span></div>` : ""}
           ${p.updatedAt ? `<div class="detail-row"><span class="detail-label">Updated At</span><span>${escHtml(p.updatedAt)}</span></div>` : ""}
           ${p.subscriptionStatus === "ACTIVE" ? `<div class="detail-row"><span class="detail-label">Sessions</span><span>${p.remainingSessions || 0} / ${p.entitledSessions || 0} remaining</span></div>` : ""}
