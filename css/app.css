@@ -833,6 +833,45 @@ select {
   min-width: 100px;
 }
 
+/* ===================== ONBOARDING SCREEN ===================== */
+
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--border-light);
+  color: var(--text-muted);
+}
+.summary-ok   { background: var(--success-light); color: #065F46; }
+.summary-warn { background: var(--warning-light);  color: #92400E; }
+
+.filter-chip {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.filter-chip.active,
+.filter-chip:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.loading-msg {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
 /* ===================== RESPONSIVE ===================== */
 @media (min-width: 768px) {
   .container { padding: 20px; }

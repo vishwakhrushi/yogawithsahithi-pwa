@@ -353,6 +353,35 @@
       </div>
     </div>
 
+    <!-- ONBOARDING STATUS SCREEN -->
+    <div class="screen" id="screen-onboarding">
+      <div class="container">
+        <h2 style="margin-bottom:16px;">Onboarding Status</h2>
+
+        <!-- Batch selector -->
+        <div style="margin-bottom:12px;">
+          <select id="onboardingBatchSelect"
+                  onchange="loadOnboardingSheet()"
+                  style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg-card);">
+            <option value="">— Select a batch —</option>
+          </select>
+        </div>
+
+        <!-- Summary strip -->
+        <div id="onboardingSummary" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
+
+        <!-- Filter chips -->
+        <div id="onboardingFilters" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+          <button class="filter-chip active" onclick="setOnboardingFilter('all', this)">All</button>
+          <button class="filter-chip"        onclick="setOnboardingFilter('wa-pending', this)">WA Pending</button>
+          <button class="filter-chip"        onclick="setOnboardingFilter('drive-pending', this)">Drive Pending</button>
+        </div>
+
+        <!-- Student list -->
+        <div id="onboardingList"></div>
+      </div>
+    </div>
+
   </main>
 
   <!-- ==================== EDIT MODAL ==================== -->
@@ -449,6 +478,10 @@
       <span>WhatsApp</span>
       <span class="offline-badge" id="offlineCount" style="display:none;">0</span>
     </button>
+    <button class="nav-item" data-screen="onboarding" id="navOnboarding" onclick="navigateTo('onboarding', this)">
+      <span class="nav-icon">&#x1F4CB;</span>
+      <span>Onboarding</span>
+    </button>
   </nav>
 
   <!-- ==================== INVOICE OVERLAY ==================== -->
@@ -474,6 +507,7 @@
   <script src="js/payments.js"></script>
   <script src="js/students.js"></script>
   <script src="js/whatsapp.js"></script>
+  <script src="js/onboarding.js"></script>
   <script src="js/invoice.js"></script>
 
 </body>

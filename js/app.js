@@ -4,7 +4,7 @@
 
 // ===================== ROUTING =====================
 
-const SCREENS = ["login", "dashboard", "add-payment", "payments", "students", "whatsapp"];
+const SCREENS = ["login", "dashboard", "add-payment", "payments", "students", "whatsapp", "onboarding"];
 
 // Min role required per screen (null = no auth needed)
 const SCREEN_ROLES = {
@@ -14,6 +14,7 @@ const SCREEN_ROLES = {
   "payments":    "VIEW_ONLY",
   "students":    "VIEW_ONLY",
   "whatsapp":    "MANAGER",
+  "onboarding":  "STAFF",
 };
 
 // Track if screen has been initialized
@@ -55,8 +56,8 @@ function handleRoute() {
     btn.classList.toggle("active", btn.dataset.screen === screen);
   });
 
-  // Init screen
-  if (!isLogin && !screenLoaded[screen]) {
+  // Init screen (onboarding always re-inits to refresh batch list)
+  if (!isLogin && (!screenLoaded[screen] || screen === "onboarding")) {
     screenLoaded[screen] = true;
     initScreen(screen);
   }
@@ -69,6 +70,7 @@ function initScreen(screen) {
     case "payments":    searchPayments(); break;
     case "students":    searchStudents(); break;
     case "whatsapp":    initWhatsApp(); break;
+    case "onboarding":  initOnboarding(); break;
   }
 }
 
@@ -96,11 +98,13 @@ function updateNavVisibility() {
   const navDash = document.getElementById("navDashboard");
   if (navDash) navDash.style.display = hasRole("ADMIN") ? "flex" : "none";
 
-  // "Add" — STAFF+; "WhatsApp" — MANAGER+
-  const navAdd = document.getElementById("navAddPayment");
-  const navWa  = document.getElementById("navWhatsApp");
-  if (navAdd) navAdd.style.display = hasRole("STAFF") ? "flex" : "none";
-  if (navWa)  navWa.style.display = hasRole("MANAGER") ? "flex" : "none";
+  // "Add" — STAFF+; "WhatsApp" — MANAGER+; "Onboarding" — STAFF+
+  const navAdd        = document.getElementById("navAddPayment");
+  const navWa         = document.getElementById("navWhatsApp");
+  const navOnboarding = document.getElementById("navOnboarding");
+  if (navAdd)        navAdd.style.display        = hasRole("STAFF")   ? "flex" : "none";
+  if (navWa)         navWa.style.display         = hasRole("MANAGER") ? "flex" : "none";
+  if (navOnboarding) navOnboarding.style.display = hasRole("STAFF")   ? "flex" : "none";
 
   // Hide broadcast tab for STAFF
   const broadcastTab = document.getElementById("waBroadcastTab");
