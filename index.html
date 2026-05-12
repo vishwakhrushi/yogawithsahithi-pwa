@@ -370,6 +370,13 @@
         <!-- Summary strip -->
         <div id="onboardingSummary" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
 
+        <!-- Search -->
+        <div id="onboardingSearchWrap" style="display:none;margin-bottom:12px;">
+          <input id="onboardingSearch" type="search" placeholder="Search by name, email or phone…"
+                 oninput="renderOnboardingList()"
+                 style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg-card);box-sizing:border-box;" />
+        </div>
+
         <!-- Filter chips -->
         <div id="onboardingFilters" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
           <button class="filter-chip active" onclick="setOnboardingFilter('all', this)">All</button>

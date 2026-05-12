@@ -58,6 +58,11 @@ async function loadOnboardingSheet() {
     onboardingStudents   = result.students || [];
     onboardingDriveShown = onboardingStudents.some(s => s.driveStatus && s.driveStatus.granted);
 
+    const searchWrap = document.getElementById("onboardingSearchWrap");
+    const searchEl   = document.getElementById("onboardingSearch");
+    if (searchWrap) searchWrap.style.display = onboardingStudents.length ? "block" : "none";
+    if (searchEl)   searchEl.value = "";
+
     renderOnboardingSummary(result);
     setOnboardingFilter("all", document.querySelector("#onboardingFilters .filter-chip"));
     if (filters) filters.style.display = "flex";
@@ -107,12 +112,22 @@ function renderOnboardingList() {
   const container = document.getElementById("onboardingList");
   if (!container) return;
 
+  const query = (document.getElementById("onboardingSearch")?.value || "").trim().toLowerCase();
+
   let students = onboardingStudents;
 
   if (onboardingFilter === "wa-pending") {
     students = students.filter(s => !s.waStatus || !s.waStatus.sent);
   } else if (onboardingFilter === "drive-pending") {
     students = students.filter(s => !s.driveStatus || !s.driveStatus.granted);
+  }
+
+  if (query) {
+    students = students.filter(s =>
+      (s.name  || "").toLowerCase().includes(query) ||
+      (s.email || "").toLowerCase().includes(query) ||
+      (s.phone || "").toLowerCase().includes(query)
+    );
   }
 
   if (students.length === 0) {
