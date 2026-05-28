@@ -6,7 +6,7 @@
  * - API calls: Network-first (no caching — always fresh data)
  */
 
-const CACHE_NAME = "ywsh-static-v1";
+const CACHE_NAME = "ywsh-static-v2";
 
 const STATIC_ASSETS = [
   "/",
@@ -20,6 +20,7 @@ const STATIC_ASSETS = [
   "/js/payments.js",
   "/js/students.js",
   "/js/whatsapp.js",
+  "/js/onboarding.js",
   "/js/offline.js",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
