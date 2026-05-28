@@ -142,14 +142,17 @@
                 <optgroup label="Evening Batch 1">
                   <option value="EV1-1M">EV1 - 1 Month</option>
                   <option value="EV1-3M">EV1 - 3 Months</option>
+                  <option value="EV1-1ML">EV1 - 1 Month Live Only</option>
                 </optgroup>
                 <optgroup label="Evening Batch 2">
                   <option value="EV2-1M">EV2 - 1 Month</option>
                   <option value="EV2-3M">EV2 - 3 Months</option>
+                  <option value="EV2-1ML">EV2 - 1 Month Live Only</option>
                 </optgroup>
                 <optgroup label="Morning Batch">
                   <option value="MOR-1M">Morning - 1 Month</option>
                   <option value="MOR-3M">Morning - 3 Months</option>
+                  <option value="MOR-1ML">Morning - 1 Month Live Only</option>
                 </optgroup>
                 <optgroup label="Prenatal Yoga">
                   <option value="PRE-1M">Prenatal - 1 Month</option>
@@ -165,7 +168,6 @@
                   <option value="FACEYOGA">Face Yoga</option>
                   <option value="BP-1M">Back Pain - 1 Month</option>
                   <option value="BP-3M">Back Pain - 3 Months</option>
-                  <option value="KIDS">Kids Yoga</option>
                   <option value="OTHER">Other Payment</option>
                   <option value="REFUND">Refund</option>
                 </optgroup>
@@ -231,13 +233,13 @@
         <div class="filter-row">
           <select id="plCourse" onchange="searchPayments()">
             <option value="">All Courses</option>
-            <option value="EV1-1M">EV1-1M</option><option value="EV1-3M">EV1-3M</option>
-            <option value="EV2-1M">EV2-1M</option><option value="EV2-3M">EV2-3M</option>
-            <option value="MOR-1M">MOR-1M</option><option value="MOR-3M">MOR-3M</option>
+            <option value="EV1-1M">EV1-1M</option><option value="EV1-3M">EV1-3M</option><option value="EV1-1ML">EV1-1ML</option>
+            <option value="EV2-1M">EV2-1M</option><option value="EV2-3M">EV2-3M</option><option value="EV2-1ML">EV2-1ML</option>
+            <option value="MOR-1M">MOR-1M</option><option value="MOR-3M">MOR-3M</option><option value="MOR-1ML">MOR-1ML</option>
             <option value="PRE-1M">PRE-1M</option><option value="PRE-3M">PRE-3M</option>
             <option value="REC-1M">REC-1M</option><option value="REC-3M">REC-3M</option>
             <option value="DIET-1M">DIET-1M</option><option value="DIET-3M">DIET-3M</option>
-            <option value="FACEYOGA">FACEYOGA</option><option value="BP-1M">BP-1M</option><option value="BP-3M">BP-3M</option><option value="KIDS">KIDS</option>
+            <option value="FACEYOGA">FACEYOGA</option><option value="BP-1M">BP-1M</option><option value="BP-3M">BP-3M</option>
             <option value="OTHER">OTHER</option><option value="REFUND">REFUND</option>
           </select>
           <select id="plAccount" onchange="searchPayments()">
@@ -417,13 +419,14 @@
           <label for="editCourse">Course</label>
           <select id="editCourse">
             <option value="">Select course</option>
-            <option value="EV1-1M">EV1-1M</option><option value="EV1-3M">EV1-3M</option>
-            <option value="EV2-1M">EV2-1M</option><option value="EV2-3M">EV2-3M</option>
-            <option value="MOR-1M">MOR-1M</option><option value="MOR-3M">MOR-3M</option>
+            <option value="EV1-1M">EV1-1M</option><option value="EV1-3M">EV1-3M</option><option value="EV1-1ML">EV1-1ML</option>
+            <option value="EV2-1M">EV2-1M</option><option value="EV2-3M">EV2-3M</option><option value="EV2-1ML">EV2-1ML</option>
+            <option value="MOR-1M">MOR-1M</option><option value="MOR-3M">MOR-3M</option><option value="MOR-1ML">MOR-1ML</option>
             <option value="PRE-1M">PRE-1M</option><option value="PRE-3M">PRE-3M</option>
             <option value="REC-1M">REC-1M</option><option value="REC-3M">REC-3M</option>
             <option value="DIET-1M">DIET-1M</option><option value="DIET-3M">DIET-3M</option>
-            <option value="FACEYOGA">FACEYOGA</option><option value="BP-1M">BP-1M</option><option value="BP-3M">BP-3M</option><option value="KIDS">KIDS</option>
+            <option value="FACEYOGA">FACEYOGA</option><option value="BP-1M">BP-1M</option><option value="BP-3M">BP-3M</option>
+            <option value="KIDS">KIDS</option>
             <option value="OTHER">OTHER</option><option value="REFUND">REFUND</option>
           </select>
         </div>
