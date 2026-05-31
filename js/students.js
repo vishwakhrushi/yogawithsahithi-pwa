@@ -125,7 +125,12 @@ function openStudentWhatsApp(idx) {
   const s = studentsData[idx];
   if (!s) return;
   // Navigate to WhatsApp center with this student pre-selected
-  waPreloadStudent = { phone: s.phone, name: s.name, course: s.currentCourse || "" };
+  waPreloadStudent = {
+    phone:           s.phone,
+    name:            s.name,
+    course:          s.currentCourse || "",
+    effectiveCourse: s.currentEffectiveCourse || s.currentCourse || "",
+  };
   screenLoaded["whatsapp"] = false;
   navigateTo("whatsapp");
 }

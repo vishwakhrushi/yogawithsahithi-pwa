@@ -78,7 +78,7 @@ async function initWhatsApp() {
   if (typeof waPreloadStudent !== "undefined" && waPreloadStudent) {
     const s = waPreloadStudent;
     waPreloadStudent = null;
-    selectWaRecipient(s.phone, s.name, s.course);
+    selectWaRecipient(s.phone, s.name, s.course, s.effectiveCourse || s.course);
     showToast("Select a template to message " + s.name, "info");
   }
 }
@@ -120,8 +120,10 @@ const NO_TEMPLATE_COURSE_PREFIXES = new Set(["DIE", "KID", "FAC", "BP-", "REC", 
 function validateTemplateForStudent(templateName, student) {
   if (!student || !student.course) return null; // no student selected — no restriction
 
-  const prefix = student.course.substring(0, 3).toUpperCase();
-  const prefix4 = student.course.substring(0, 4).toUpperCase();
+  // Use effectiveCourse for template logic (resolves OTHER → real course from remarks)
+  const resolvedCourse = (student.effectiveCourse || student.course).toUpperCase();
+  const prefix  = resolvedCourse.substring(0, 3);
+  const prefix4 = resolvedCourse.substring(0, 4);
 
   // Courses with no template yet (matched by 3-char prefix)
   if (NO_TEMPLATE_COURSE_PREFIXES.has(prefix)) {
@@ -202,9 +204,9 @@ function renderTemplateParams(formId, templateName, student, batch) {
     new_date:    "",
   };
 
-  // Filter active batches by the student's latest course prefix (EV1, EV2, MOR, PRE etc.)
+  // Filter active batches using effectiveCourse (resolves OTHER → real course from remarks)
   // Falls back to all active batches if no course or course has no batch (DIET, KIDS, etc.)
-  const studentCourse  = student ? (student.course || "").trim() : "";
+  const studentCourse  = student ? ((student.effectiveCourse || student.course) || "").trim() : "";
   const coursePrefix   = studentCourse.substring(0, 3).toUpperCase(); // "EV1", "MOR", "PRE" etc.
   const batchCourses   = new Set(["EV1", "EV2", "MOR", "PRE"]); // courses that have batches
 
@@ -441,11 +443,11 @@ function renderWaRecipientList(students) {
 function selectWaSearchResult(idx) {
   const s = waSearchResults[idx];
   if (!s) return;
-  selectWaRecipient(s.phone, s.name, s.currentCourse || "");
+  selectWaRecipient(s.phone, s.name, s.currentCourse || "", s.currentEffectiveCourse || s.currentCourse || "");
 }
 
-function selectWaRecipient(phone, name, course) {
-  waSelectedRecipients = [{ phone, name, course }];
+function selectWaRecipient(phone, name, course, effectiveCourse) {
+  waSelectedRecipients = [{ phone, name, course, effectiveCourse: effectiveCourse || course }];
   document.getElementById("waRecipientList").innerHTML = "";
   document.getElementById("waSelectedRecipient").style.display = "block";
   document.getElementById("waSelectedRecipient").innerHTML = `

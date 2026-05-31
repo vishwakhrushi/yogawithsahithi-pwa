@@ -472,6 +472,8 @@ select {
 .badge-purple { background: var(--primary-light); color: var(--primary); }
 .badge-green  { background: var(--success-light); color: #065F46; }
 .badge-amber  { background: var(--warning-light); color: #92400E; }
+.badge-grey   { background: #F3F4F6; color: #6B7280; }
+.hint-text    { font-size: 0.75rem; color: var(--text-muted); }
 .badge-red    { background: var(--danger-light);  color: #991B1B; }
 .badge-gray   { background: var(--border-light);  color: var(--text-muted); }
 

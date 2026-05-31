@@ -182,8 +182,11 @@ function renderPayments() {
     const amountClass = isRefund ? "pc-amount refund" : "pc-amount";
     const amountPrefix = isRefund ? "-" : "";
 
-    // WA status badge — shown for all non-REFUND payments
-    const showWa  = !isRefund && p.course !== "OTHER";
+    // Use effectiveCourse for logic; fall back to course for backward compat
+    const effCourse = p.effectiveCourse || p.course;
+
+    // WA status badge — shown for all non-REFUND payments where course is resolved
+    const showWa  = !isRefund && effCourse !== "OTHER";
     const wa      = p.waStatus || {};
     const waBadge = showWa
       ? `<span class="status-badge ${wa.sent ? "status-sent" : "status-pending"}" title="${wa.sent ? `Sent: ${escHtml(wa.sentAt || "")} via ${escHtml(wa.template || "")}` : "WhatsApp not sent yet"}">
@@ -192,7 +195,7 @@ function renderPayments() {
       : "";
 
     // Drive status badge — shown only for courses that grant Drive access
-    const showDrive  = DRIVE_COURSES.has(p.course);
+    const showDrive  = DRIVE_COURSES.has(effCourse);
     const dr         = p.driveStatus || {};
     const driveBadge = showDrive
       ? `<span class="status-badge ${dr.granted ? "status-sent" : "status-pending"}" title="${dr.granted ? `Drive granted: ${escHtml(dr.grantedAt || "")} · Expires: ${escHtml(dr.expiryDate || "")}` : "Drive access not granted yet"}">
@@ -227,7 +230,7 @@ function renderPayments() {
         <div class="pc-header">
           <div>
             <div class="pc-name">${escHtml(p.name)}</div>
-            <span class="badge badge-purple">${escHtml(p.course)}</span>
+            <span class="badge badge-purple">${escHtml(p.course)}</span>${effCourse !== p.course ? ` <span class="badge badge-grey" title="Effective course resolved from remarks">${escHtml(effCourse)}</span>` : ""}
           </div>
           <div class="${amountClass}">${amountPrefix}${formatCurrency(Math.abs(p.amount))}</div>
         </div>
@@ -239,6 +242,7 @@ function renderPayments() {
         ${(waBadge || driveBadge) ? `<div class="pc-status-row">${waBadge}${driveBadge}</div>` : ""}
         <div class="pc-details">
           ${p.email ? `<div class="detail-row"><span class="detail-label">Email</span><span>${escHtml(p.email)}</span></div>` : ""}
+          ${effCourse !== p.course ? `<div class="detail-row"><span class="detail-label">Effective Course</span><span><span class="badge badge-grey">${escHtml(effCourse)}</span> <span class="hint-text">(resolved from remarks)</span></span></div>` : ""}
           ${p.transactionId ? `<div class="detail-row"><span class="detail-label">Txn ID</span><span>${escHtml(p.transactionId)}</span></div>` : ""}
           ${p.remarks ? `<div class="detail-row"><span class="detail-label">Remarks</span><span>${escHtml(p.remarks)}</span></div>` : ""}
           ${waDetail}
@@ -343,9 +347,10 @@ function quickWhatsApp(idx) {
 
   // Store student so WhatsApp center can pre-select them
   waPreloadStudent = {
-    phone:  p.phoneNormalized || p.whatsapp,
-    name:   p.name,
-    course: p.course,
+    phone:          p.phoneNormalized || p.whatsapp,
+    name:           p.name,
+    course:         p.course,
+    effectiveCourse: p.effectiveCourse || p.course,
   };
 
   // Reset so WhatsApp screen reinitialises with pre-selected student
